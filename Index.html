@@ -88,30 +88,55 @@
     </div>
   </div>
 
-  <div id="modal-novo-tecnico" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[300] hidden flex items-center justify-center p-4">
-    <div class="bg-white dark:bg-darkcard rounded-2xl shadow-2xl w-full max-w-lg flex flex-col overflow-hidden animate-[fadeIn_0.2s_ease-out]">
-      <div class="p-5 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-800">
-        <h2 class="text-lg font-black text-slate-800 dark:text-white">➕ Cadastrar Novo Técnico</h2>
-        <button onclick="fecharModalTecnico()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition text-xl">✖</button>
+  <div id="modal-tecnico" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[300] hidden flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-darkcard rounded-2xl shadow-2xl w-full max-w-3xl flex flex-col overflow-hidden animate-[fadeIn_0.2s_ease-out]">
+      <div class="p-5 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-indigo-600">
+        <h2 class="text-lg font-black text-white" id="titulo-modal-tecnico">⚙️ Gestão de Técnico</h2>
+        <button onclick="fecharModalTecnico()" class="text-indigo-200 hover:text-white transition text-xl">✖</button>
       </div>
-      <div class="p-6 flex flex-col gap-4">
-        <div>
-          <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">Nome do Técnico / Empresa</label>
-          <input type="text" id="ipt-tec-nome" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none dark:text-white" placeholder="Ex: João da Silva">
+      
+      <div class="p-6 flex flex-col gap-5 overflow-y-auto max-h-[75vh]">
+        <input type="hidden" id="ipt-tec-linha"> <div class="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/50 p-4 rounded-xl">
+          <p class="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase mb-2">Preenchimento Automático</p>
+          <div class="flex gap-3">
+             <input type="text" id="ipt-tec-cep" class="flex-1 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm outline-none focus:border-indigo-500 dark:text-white font-mono" placeholder="Digite o CEP (Ex: 01001-000)">
+             <button onclick="buscarCepFormulario()" id="btn-busca-cep" class="px-5 py-2.5 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition whitespace-nowrap shadow-sm flex items-center gap-2">🔍 Buscar</button>
+          </div>
         </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">Endereço Completo</label>
-          <input type="text" id="ipt-tec-end" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none dark:text-white" placeholder="Ex: Centro, Belo Horizonte - MG, Brasil">
-          <p class="text-[10px] text-slate-500 mt-1">⚠️ Digite "Bairro, Cidade - Estado" para o GPS funcionar bem.</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="space-y-4">
+            <div><label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Nome do Técnico / Empresa</label>
+            <input type="text" id="ipt-tec-nome" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded p-2.5 text-sm dark:text-white outline-none"></div>
+            
+            <div><label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Logradouro / Endereço</label>
+            <input type="text" id="ipt-tec-end" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded p-2.5 text-sm dark:text-white outline-none transition-colors duration-300"></div>
+            
+            <div><label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Número / Comp.</label>
+            <input type="text" id="ipt-tec-num" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded p-2.5 text-sm dark:text-white outline-none"></div>
+          </div>
+          
+          <div class="space-y-4">
+            <div><label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Bairro</label>
+            <input type="text" id="ipt-tec-bairro" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded p-2.5 text-sm dark:text-white outline-none transition-colors duration-300"></div>
+            
+            <div class="grid grid-cols-2 gap-3">
+              <div><label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Cidade</label>
+              <input type="text" id="ipt-tec-cidade" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded p-2.5 text-sm dark:text-white outline-none transition-colors duration-300"></div>
+              
+              <div><label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Estado (UF)</label>
+              <input type="text" id="ipt-tec-estado" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded p-2.5 text-sm dark:text-white outline-none transition-colors duration-300" maxlength="2"></div>
+            </div>
+
+            <div><label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Telefone</label>
+            <input type="text" id="ipt-tec-tel" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded p-2.5 text-sm dark:text-white outline-none"></div>
+          </div>
         </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">Telefone (Opcional)</label>
-          <input type="text" id="ipt-tec-tel" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none dark:text-white" placeholder="(XX) 90000-0000">
-        </div>
+
       </div>
       <div class="p-5 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 flex justify-end gap-3">
-        <button onclick="fecharModalTecnico()" class="px-5 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition">Cancelar</button>
-        <button onclick="salvarNovoTecnico()" id="btn-salvar-tec" class="px-6 py-2 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition shadow-md">Salvar Técnico</button>
+        <button onclick="fecharModalTecnico()" class="px-5 py-2.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition">Cancelar</button>
+        <button onclick="salvarTecnicoFormulario()" id="btn-salvar-tec" class="px-6 py-2.5 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700 transition shadow-md flex items-center gap-2">💾 Salvar Dados</button>
       </div>
     </div>
   </div>
@@ -254,13 +279,23 @@
 
     <div id="tela-tecnicos" class="h-full hidden flex-col p-8 overflow-hidden">
       <div class="flex justify-between items-center mb-6 shrink-0">
-        <div><h2 class="text-3xl font-black text-slate-800 dark:text-white tracking-tight">Gestão de Técnicos</h2><p class="text-slate-500 dark:text-slate-400 mt-1 text-sm">Gerencie os profissionais de instalação cadastrados na planilha secundária.</p></div>
-        <div class="flex items-center gap-3"><button onclick="carregarTecnicos()" class="px-5 py-2.5 bg-white dark:bg-darkcard rounded-lg font-bold border border-slate-300 dark:border-slate-600 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition dark:text-white text-sm">🔄 Atualizar Lista</button><button onclick="abrirModalTecnico()" class="px-5 py-2.5 bg-indigo-600 text-white rounded-lg font-bold shadow-md hover:bg-indigo-700 transition flex items-center gap-2 text-sm">➕ Adicionar Técnico</button></div>
+        <div><h2 class="text-3xl font-black text-slate-800 dark:text-white tracking-tight">Gestão de Técnicos</h2><p class="text-slate-500 dark:text-slate-400 mt-1 text-sm">Gerencie os profissionais na planilha secundária com consulta a API dos Correios.</p></div>
+        <div class="flex items-center gap-3">
+          <button onclick="carregarTecnicos()" class="px-5 py-2.5 bg-white dark:bg-darkcard rounded-lg font-bold border border-slate-300 dark:border-slate-600 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition dark:text-white text-sm">🔄 Atualizar</button>
+          <button onclick="abrirModalTecnico()" class="px-5 py-2.5 bg-indigo-600 text-white rounded-lg font-bold shadow-md hover:bg-indigo-700 transition flex items-center gap-2 text-sm">➕ Adicionar Técnico</button>
+        </div>
       </div>
       <div class="bg-white dark:bg-darkcard shadow-sm border border-slate-200 dark:border-darkborder overflow-y-auto flex-1 rounded-xl relative">
         <div id="loading-tecnicos" class="flex flex-col items-center justify-center py-20 gap-4 text-indigo-600 dark:text-indigo-400 font-bold hidden"><div class="loader rounded-full border-4 h-10 w-10 border-r-transparent"></div> Carregando técnicos...</div>
         <table id="tabela-tecnicos" class="min-w-max w-full text-left text-sm hidden border-collapse">
-          <thead class="bg-slate-100 dark:bg-slate-800 border-b-2 border-slate-200 dark:border-slate-700 sticky top-0 z-20 shadow-sm"><tr class="text-slate-500 dark:text-slate-400 uppercase text-[10px] tracking-wider select-none font-bold"><th class="py-4 px-6">Nome / Empresa</th><th class="py-4 px-6">Localização (Estado)</th><th class="py-4 px-6">Contato</th><th class="py-4 px-6 w-24 text-center">Ações</th></tr></thead>
+          <thead class="bg-slate-100 dark:bg-slate-800 border-b-2 border-slate-200 dark:border-slate-700 sticky top-0 z-20 shadow-sm">
+            <tr class="text-slate-500 dark:text-slate-400 uppercase text-[10px] tracking-wider select-none font-bold">
+              <th class="py-2 px-4 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition" onclick="setSortTecnicos('nome')">Nome / Empresa <span id="sort-tec-nome" class="sort-icon"></span></th>
+              <th class="py-2 px-4 text-center cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition" onclick="setSortTecnicos('estado')">Estado <span id="sort-tec-estado" class="sort-icon"></span></th>
+              <th class="py-2 px-4 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition" onclick="setSortTecnicos('telefone')">Contato <span id="sort-tec-telefone" class="sort-icon"></span></th>
+              <th class="py-2 px-4 text-center w-32">Ações</th>
+            </tr>
+          </thead>
           <tbody id="corpo-tecnicos" class="divide-y divide-slate-100 dark:divide-slate-800/50 text-slate-700 dark:text-slate-300"></tbody>
         </table>
       </div>
@@ -320,7 +355,6 @@
       <p class="text-slate-500 dark:text-slate-400 font-medium mb-8 shrink-0">Estas ferramentas varrem toda a planilha de uma só vez.</p>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 shrink-0">
         <button class="bg-white dark:bg-darkcard p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-darkborder hover:border-indigo-500 text-left transition transform hover:-translate-y-1" onclick="rodarFerramentaGlobal('auditar_aba4')"><div class="text-4xl mb-3">🎨</div><h3 class="font-black text-slate-800 dark:text-white text-lg">Colorir Aba 4</h3><p class="text-xs text-slate-500 mt-1">Atualiza as cores da Auditoria</p></button>
-        <button class="bg-white dark:bg-darkcard p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-darkborder hover:border-indigo-500 text-left transition transform hover:-translate-y-1" onclick="rodarFerramentaGlobal('sincronizar_erros')"><div class="text-4xl mb-3">⚠️</div><h3 class="font-black text-slate-800 dark:text-white text-lg">Erros Gmail</h3><p class="text-xs text-slate-500 mt-1">Lê a caixa de entrada de Delivery Status</p></button>
         <button class="bg-white dark:bg-darkcard p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-darkborder hover:border-emerald-500 text-left transition transform hover:-translate-y-1" onclick="rodarFerramentaGlobal('varrer_concluidos')"><div class="text-4xl mb-3">✅</div><h3 class="font-black text-slate-800 dark:text-white text-lg">Varrer Concluídos</h3><p class="text-xs text-slate-500 mt-1">Busca e limpa todos da fila pela API</p></button>
       </div>
     </div>
@@ -352,13 +386,14 @@
     let colunaOrdenacao = 'etapaNum', ordemAscendente = true, currentPage = 1, rowsPerPage = 50, selectionSet = new Set(); 
     let currentLogPage = 1, rowsPerLogPage = 50, cacheLogsFiltrados = [];
 
-
-    //Dashboard
+    // ====================================================================================
+    // DASHBOARD BI LÓGICA E GRAFICOS
+    // ====================================================================================
     function carregarDashboard() {
       document.getElementById('loading-dash').classList.remove('hidden');
       google.script.run.withSuccessHandler(stats => {
         document.getElementById('loading-dash').classList.add('hidden'); 
-        if(stats.erro) return aviso("Aviso BI: " + stats.erro);
+        if(stats && stats.erro) return aviso("Aviso BI: " + stats.erro);
         
         window.currentStats = stats; 
 
@@ -445,6 +480,21 @@
       }).solicitarDadosWeb('dashboard');
     }
 
+    function gerarApresentacaoSlides() {
+      aviso("⏳ Capturando gráficos e gerando Google Slides...", 60000);
+      const graficosParaExportar = [
+        { titulo: 'Evolução Mensal', base64: document.getElementById('chartHistorico').toDataURL('image/png') },
+        { titulo: 'Envios por Etapa', base64: document.getElementById('chartEnviosEtapa').toDataURL('image/png') },
+        { titulo: 'Veículos Pendentes', base64: document.getElementById('chartPendentes').toDataURL('image/png') },
+        { titulo: 'Desempenho de Equipe', base64: document.getElementById('chartEquipe').toDataURL('image/png') }
+      ];
+      google.script.run.withSuccessHandler(res => {
+        if(res.erro) return aviso("❌ Erro ao gerar slides: " + res.erro);
+        aviso(`✅ Apresentação gerada com sucesso!`, 5000);
+        window.open(res.url, '_blank');
+      }).exportarDashboardParaSlidesWeb(graficosParaExportar, window.currentStats);
+    }
+
     // ====================================================================================
     // FORMATAÇÃO ESTRITA DE MOEDA BRASILEIRA E UTILITÁRIOS
     // ====================================================================================
@@ -452,14 +502,9 @@
       if (!valor) return 'Sem FIPE';
       let str = String(valor).replace(/R\$\s?/gi, '').trim();
       if (str === '') return 'Sem FIPE';
-      
-      if (str.indexOf(',') > -1) {
-        str = str.replace(/\./g, '').replace(',', '.');
-      } 
-      
+      if (str.indexOf(',') > -1) { str = str.replace(/\./g, '').replace(',', '.'); } 
       let num = parseFloat(str);
       if (isNaN(num)) return '💰 R$ ' + String(valor).replace(/R\$\s?/gi, '').trim(); 
-      
       let formatado = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
       return '💰 R$ ' + formatado;
     }
@@ -484,7 +529,7 @@
       if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) { document.documentElement.classList.add('dark'); document.getElementById('theme-icon').innerText = '☀️'; }
       if (VIEW_PARAM === 'fila') { document.getElementById('sidebar').classList.add('hidden'); navegarFila(null); } 
       else if (VIEW_PARAM === 'dash') { document.getElementById('sidebar').classList.add('hidden'); navegar('tela-dashboard', null); } 
-      else { carregarDashboard(); }
+      else { navegar('tela-tecnicos', null); } // Iniciando em técnicos 
     };
 
     function abrirNovaAba(view) { if(APP_URL && APP_URL !== "") window.open(APP_URL + "?view=" + view, "_blank"); else aviso("⚠️ Erro: Acesse pelo link oficial de Implantação."); }
@@ -517,7 +562,7 @@
        imprimirTabela(titulo + " (Filtrado)", cacheLogsBase.colunas, linhasHTML);
     }
 
-    function alternarTelas(telaIdAlvo) { ['tela-dashboard', 'tela-etapa', 'tela-ferramentas', 'tela-config', 'tela-logs', 'tela-cadastro', 'tela-tecnicos'].forEach(id => { const el = document.getElementById(id); if (id === telaIdAlvo) { el.classList.remove('hidden'); el.classList.add('flex'); } else { el.classList.add('hidden'); el.classList.remove('flex'); } }); }
+    function alternarTelas(telaIdAlvo) { ['tela-dashboard', 'tela-etapa', 'tela-ferramentas', 'tela-config', 'tela-logs', 'tela-cadastro', 'tela-tecnicos'].forEach(id => { const el = document.getElementById(id); if(!el) return; if (id === telaIdAlvo) { el.classList.remove('hidden'); el.classList.add('flex'); } else { el.classList.add('hidden'); el.classList.remove('flex'); } }); }
     function navegar(telaIdAlvo, btnElement) { if(btnElement) { document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active')); btnElement.classList.add('active'); } alternarTelas(telaIdAlvo); if(telaIdAlvo === 'tela-dashboard') carregarDashboard(); if(telaIdAlvo === 'tela-logs') carregarDadosDoLog(); if(telaIdAlvo === 'tela-config') carregarConfigs(); if(telaIdAlvo === 'tela-tecnicos') carregarTecnicos(); }
     function navegarFila(btnElement) { document.getElementById('filtroFila').value = "pendentes"; document.getElementById('filtroEtapa').value = "todas"; document.getElementById('filtroTrava').value = "todos"; colunaOrdenacao = 'etapaNum'; ordemAscendente = true; selectionSet.clear(); contarChecksGlobais(); navegar('tela-etapa', btnElement); carregarFilaGeral(); }
 
@@ -578,7 +623,6 @@
 
           const rowCls = cli.isEnviado ? "bg-slate-50 dark:bg-slate-800/40 opacity-60 grayscale-[30%]" : (cli.isMoto ? "linha-moto hover:brightness-95 dark:hover:brightness-110" : "hover:bg-indigo-50 dark:hover:bg-slate-700/50 bg-white dark:bg-darkcard table-row-anim");
           
-          // Emojis reduzidos para text-xl
           let badgeEtapa = cli.etapaNum === 1 ? `<div class="text-center text-xl cursor-help transform hover:scale-110 transition drop-shadow-sm" title="Boas Vindas">🔰</div>` : cli.etapaNum === 2 ? `<div class="text-center text-xl cursor-help transform hover:scale-110 transition drop-shadow-sm" title="Alerta 5 Dias">⚠️</div>` : `<div class="text-center text-xl cursor-help transform hover:scale-110 transition drop-shadow-sm" title="Prazo Expirado">⛔</div>`;
           
           let tooltipEnd = "";
@@ -586,7 +630,6 @@
           if (cli.bairro) tooltipEnd += (tooltipEnd ? `\n` : ``) + `Bairro: ${cli.bairro}`;
           if (!tooltipEnd) tooltipEnd = "Endereço detalhado indisponível";
 
-          // Estado limpo, com hover e Cadeado grande ao lado
           let htmlLocalizacao = `
             <div class="flex items-center justify-between gap-2">
               <div class="cursor-help font-black text-[13px] whitespace-nowrap ${cli.isTecnicoIndisp ? 'text-amber-600 dark:text-amber-500' : 'text-slate-700 dark:text-slate-300'}" title="${tooltipEnd}">
@@ -599,7 +642,6 @@
             </div>
           `;
           
-          // Logística sem link de mapa
           let htmlLogistica = `<span class="text-slate-400 dark:text-slate-500 italic text-[10px]">Sem rota definida</span>`;
           if (cli.tecnicoDisp) {
             htmlLogistica = `
@@ -611,7 +653,6 @@
           const isChecked = selectionSet.has(cli.idUnico) ? "checked" : "";
           let fipeBadgeClass = cli.isFipeBaixa ? "bg-rose-100 dark:bg-rose-900/40 border-rose-300 dark:border-rose-700/50 text-rose-800 dark:text-rose-400" : "bg-slate-100 dark:bg-slate-700 border-slate-300 dark:border-slate-600 text-slate-800 dark:text-slate-200";
 
-          // Exibir placa com prioridade
           let veiculoDisplay = cli.placa ? cli.placa : (cli.chassi ? cli.chassi : "-");
           let fipeDisplay = formatarMoedaBRL(cli.fipe);
 
@@ -803,9 +844,81 @@
       document.getElementById('paginacaoBoxLogs').classList.remove('hidden'); document.getElementById('tabela-logs').classList.remove('hidden');
     }
 
+  // ====================================================================================
+    // GESTÃO DE TÉCNICOS NO FRONTEND 
     // ====================================================================================
-    // GESTÃO DE TÉCNICOS NO FRONTEND
-    // ====================================================================================
+    let cacheTecnicosGeral = [];
+    let colunaOrdenacaoTec = 'nome';
+    let ordemAscendenteTec = true;
+
+    function setSortTecnicos(coluna) {
+      if (colunaOrdenacaoTec === coluna) {
+        ordemAscendenteTec = !ordemAscendenteTec;
+      } else {
+        colunaOrdenacaoTec = coluna;
+        ordemAscendenteTec = true;
+      }
+      
+      document.querySelectorAll('[id^="sort-tec-"]').forEach(icon => {
+        icon.innerHTML = "";
+        icon.parentElement.classList.remove('sort-active');
+      });
+      const ativo = document.getElementById(`sort-tec-${coluna}`);
+      if (ativo) {
+        ativo.innerHTML = ordemAscendenteTec ? "▲" : "▼";
+        ativo.parentElement.classList.add('sort-active');
+      }
+      
+      renderizarTabelaTecnicos();
+    }
+
+    function renderizarTabelaTecnicos() {
+      const corpo = document.getElementById('corpo-tecnicos');
+      corpo.innerHTML = "";
+      
+      if (!cacheTecnicosGeral || cacheTecnicosGeral.length === 0) {
+        corpo.innerHTML = `<tr><td colspan="4" class="px-6 py-16 text-center text-slate-500 dark:text-slate-400 font-bold text-lg">Nenhum técnico cadastrado na planilha.</td></tr>`;
+        return;
+      }
+
+      // Clona o array original para não perder a referência dos dados e aplica a ordenação
+      let dadosOrdenados = [...cacheTecnicosGeral];
+      dadosOrdenados.sort((a, b) => {
+        let valA = (a[colunaOrdenacaoTec] || "").toString().toLowerCase();
+        let valB = (b[colunaOrdenacaoTec] || "").toString().toLowerCase();
+        if (valA < valB) return ordemAscendenteTec ? -1 : 1;
+        if (valA > valB) return ordemAscendenteTec ? 1 : -1;
+        return 0;
+      });
+
+      // Renderiza as linhas compactas
+      dadosOrdenados.forEach((tec) => {
+        const endBairro = tec.bairro ? tec.bairro : '-';
+        const endCidade = tec.cidade ? tec.cidade : '-';
+        const endEstado = tec.estado ? tec.estado : '-';
+        
+        const tooltipLocal = `Cidade: ${endCidade}\nBairro: ${endBairro}`;
+
+        corpo.innerHTML += `
+          <tr class="hover:bg-indigo-50 dark:hover:bg-slate-700/50 bg-white dark:bg-darkcard transition border-b border-slate-100 dark:border-slate-800/60">
+            <td class="py-2.5 px-4 font-black text-slate-800 dark:text-slate-200 text-sm align-middle">${tec.nome}</td>
+            <td class="py-2.5 px-4 align-middle text-center">
+               <div class="cursor-help font-black text-[11px] text-slate-700 dark:text-slate-300 inline-flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-md border border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 transition shadow-sm w-max mx-auto" title="${tooltipLocal}">
+                  📍 ${endEstado}
+               </div>
+            </td>
+            <td class="py-2.5 px-4 font-mono text-slate-600 dark:text-slate-400 text-xs align-middle">${tec.telefone || "---"}</td>
+            <td class="py-2.5 px-4 align-middle">
+              <div class="flex items-center justify-center gap-2">
+                 <button onclick="abrirModalTecnico(${tec.linha})" class="bg-indigo-50 dark:bg-indigo-900/40 hover:bg-indigo-100 dark:hover:bg-indigo-800/60 text-indigo-700 dark:text-indigo-400 px-2.5 py-1.5 rounded font-bold transition text-[10px] border border-indigo-200 dark:border-indigo-800/50 shadow-sm flex items-center gap-1">✏️ Editar</button>
+                 <button onclick="excluirTecnico(${tec.linha}, '${tec.nome.replace(/'/g, "\\'")}')" class="text-rose-500 hover:text-rose-700 dark:hover:text-rose-400 bg-rose-50 dark:bg-rose-900/20 font-bold transition text-[10px] px-2.5 py-1.5 rounded border border-rose-200 dark:border-rose-800/50 shadow-sm flex items-center gap-1">🗑️ Remover</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
     function carregarTecnicos() {
       document.getElementById('loading-tecnicos').classList.remove('hidden');
       document.getElementById('tabela-tecnicos').classList.add('hidden');
@@ -815,50 +928,18 @@
           document.getElementById('loading-tecnicos').classList.add('hidden');
           if (dados && dados.erro) return aviso("❌ " + dados.erro, 10000);
           
-          const corpo = document.getElementById('corpo-tecnicos');
-          corpo.innerHTML = "";
+          cacheTecnicosGeral = dados;
           
-          if (dados.length === 0) {
-            corpo.innerHTML = `<tr><td colspan="4" class="px-6 py-16 text-center text-slate-500 dark:text-slate-400 font-bold text-lg">Nenhum técnico cadastrado na planilha.</td></tr>`;
-          } else {
-            // Dicionário de UFs para converter para o nome por extenso
-            const mapaEstados = {
-              'AC': 'Acre', 'AL': 'Alagoas', 'AP': 'Amapá', 'AM': 'Amazonas', 'BA': 'Bahia',
-              'CE': 'Ceará', 'DF': 'Distrito Federal', 'ES': 'Espírito Santo', 'GO': 'Goiás',
-              'MA': 'Maranhão', 'MT': 'Mato Grosso', 'MS': 'Mato Grosso do Sul', 'MG': 'Minas Gerais',
-              'PA': 'Pará', 'PB': 'Paraíba', 'PR': 'Paraná', 'PE': 'Pernambuco', 'PI': 'Piauí',
-              'RJ': 'Rio de Janeiro', 'RN': 'Rio Grande do Norte', 'RS': 'Rio Grande do Sul',
-              'RO': 'Rondônia', 'RR': 'Roraima', 'SC': 'Santa Catarina', 'SP': 'São Paulo',
-              'SE': 'Sergipe', 'TO': 'Tocantins'
-            };
-            
-            // Inteligência para caçar apenas siglas de estados reais no texto do endereço, ignorando o CEP
-            const regexEstado = /\b(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\b/i;
-
-            dados.forEach((tec, idx) => {
-              let estadoStr = "Estado Não Identificado";
-              
-              // Busca a UF no endereço usando o Regex e converte
-              let match = tec.endereco.match(regexEstado);
-              if (match) {
-                  let uf = match[0].toUpperCase();
-                  estadoStr = mapaEstados[uf] || uf;
-              }
-
-              corpo.innerHTML += `
-                <tr class="hover:bg-indigo-50 dark:hover:bg-slate-700/50 bg-white dark:bg-darkcard transition border-b border-slate-100 dark:border-slate-800/60">
-                  <td class="py-3 px-6 font-black text-slate-800 dark:text-slate-200 text-sm">${tec.nome}</td>
-                  <td class="py-3 px-6">
-                    <div class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2.5 py-1 rounded-md font-bold text-xs inline-block border border-slate-200 dark:border-slate-700 shadow-sm cursor-help" title="${tec.endereco}">📍 ${estadoStr}</div>
-                  </td>
-                  <td class="py-3 px-6 font-mono text-slate-600 dark:text-slate-400 text-xs">${tec.telefone || "N/A"}</td>
-                  <td class="py-3 px-6 text-center">
-                    <button onclick="excluirTecnico(${tec.linha}, '${tec.nome.replace(/'/g, "\\'")}')" class="bg-rose-100 dark:bg-rose-900/40 hover:bg-rose-200 dark:hover:bg-rose-800/60 text-rose-700 dark:text-rose-400 px-3 py-1.5 rounded-lg font-bold transition text-xs border border-rose-200 dark:border-rose-800/50 shadow-sm flex items-center gap-1 mx-auto">🗑️ Remover</button>
-                  </td>
-                </tr>
-              `;
-            });
+          // Chama o motor de renderização da tabela
+          renderizarTabelaTecnicos(); 
+          
+          // Ajusta o ícone "▲" na primeira renderização de forma automática na coluna "Nome"
+          const iconePadrao = document.getElementById('sort-tec-nome');
+          if (iconePadrao) {
+             iconePadrao.innerHTML = "▲";
+             iconePadrao.parentElement.classList.add('sort-active');
           }
+          
           document.getElementById('tabela-tecnicos').classList.remove('hidden');
         })
         .withFailureHandler(erro => {
@@ -868,15 +949,112 @@
         .solicitarDadosWeb('tecnicos');
     }
 
-    function abrirModalTecnico() { document.getElementById('ipt-tec-nome').value = ""; document.getElementById('ipt-tec-end').value = ""; document.getElementById('ipt-tec-tel').value = ""; document.getElementById('modal-novo-tecnico').classList.remove('hidden'); }
-    function fecharModalTecnico() { document.getElementById('modal-novo-tecnico').classList.add('hidden'); }
-    function salvarNovoTecnico() {
-      const n = document.getElementById('ipt-tec-nome').value.trim(), e = document.getElementById('ipt-tec-end').value.trim(), t = document.getElementById('ipt-tec-tel').value.trim();
-      if (!n || !e) return aviso("⚠️ Nome e Endereço obrigatórios.");
-      const btn = document.getElementById('btn-salvar-tec'); btn.innerHTML = "Salvando..."; btn.disabled = true;
-      google.script.run.withSuccessHandler(res => { aviso(res); btn.innerHTML = "Salvar"; btn.disabled = false; fecharModalTecnico(); carregarTecnicos(); }).withFailureHandler(err => { aviso("❌ " + err.message); btn.innerHTML = "Salvar"; btn.disabled = false; }).web_adicionarTecnico(n, e, t);
+    function abrirModalTecnico(linha = null) { 
+      const camposBase = ['ipt-tec-cep', 'ipt-tec-nome', 'ipt-tec-end', 'ipt-tec-num', 'ipt-tec-bairro', 'ipt-tec-cidade', 'ipt-tec-estado', 'ipt-tec-tel'];
+      
+      // Limpa cores de alerta do ViaCEP
+      camposBase.forEach(id => document.getElementById(id).classList.remove('bg-emerald-50', 'dark:bg-emerald-900/20', 'border-emerald-400'));
+
+      if (linha) {
+        const tec = cacheTecnicosGeral.find(t => t.linha === linha);
+        if (!tec) return aviso("Técnico não encontrado.");
+        
+        document.getElementById('titulo-modal-tecnico').innerText = "✏️ Editar Técnico";
+        document.getElementById('ipt-tec-linha').value = linha;
+        
+        document.getElementById('ipt-tec-nome').value = tec.nome;
+        document.getElementById('ipt-tec-end').value = tec.endereco;
+        document.getElementById('ipt-tec-num').value = tec.numero;
+        document.getElementById('ipt-tec-bairro').value = tec.bairro;
+        document.getElementById('ipt-tec-cidade').value = tec.cidade;
+        document.getElementById('ipt-tec-estado').value = tec.estado;
+        document.getElementById('ipt-tec-cep').value = tec.cep;
+        document.getElementById('ipt-tec-tel').value = tec.telefone;
+      } else {
+        document.getElementById('titulo-modal-tecnico').innerText = "➕ Cadastrar Novo Técnico";
+        document.getElementById('ipt-tec-linha').value = "";
+        camposBase.forEach(id => document.getElementById(id).value = "");
+      }
+      
+      document.getElementById('modal-tecnico').classList.remove('hidden'); 
     }
-    function excluirTecnico(l, n) { if(confirm(`Excluir técnico "${n}"?`)) { aviso("🗑️ Removendo..."); google.script.run.withSuccessHandler(res => { aviso(res); carregarTecnicos(); }).web_removerTecnico(l); } }
+    
+    function fecharModalTecnico() { document.getElementById('modal-tecnico').classList.add('hidden'); }
+    
+    function buscarCepFormulario() {
+      const cepRaw = document.getElementById('ipt-tec-cep').value.replace(/\D/g, '');
+      if (cepRaw.length !== 8) return aviso("⚠️ CEP inválido. Digite 8 números.");
+      
+      const btn = document.getElementById('btn-busca-cep');
+      btn.innerHTML = "⏳..."; btn.disabled = true;
+      
+      fetch(`https://viacep.com.br/ws/${cepRaw}/json/`)
+        .then(res => res.json())
+        .then(dados => {
+          btn.innerHTML = "🔍 Buscar"; btn.disabled = false;
+          if (dados.erro) return aviso("❌ CEP não encontrado nos Correios.");
+          
+          const camposMapeados = [
+            { id: 'ipt-tec-end', valor: dados.logradouro },
+            { id: 'ipt-tec-bairro', valor: dados.bairro },
+            { id: 'ipt-tec-cidade', valor: dados.localidade },
+            { id: 'ipt-tec-estado', valor: dados.uf }
+          ];
+
+          camposMapeados.forEach(campo => {
+            const el = document.getElementById(campo.id);
+            el.value = campo.valor || "";
+            el.classList.add('bg-emerald-50', 'dark:bg-emerald-900/20', 'border-emerald-400');
+          });
+
+          document.getElementById('ipt-tec-num').focus();
+          aviso("✅ Endereço preenchido. Informe o número e salve.");
+        })
+        .catch(err => {
+          btn.innerHTML = "🔍 Buscar"; btn.disabled = false;
+          aviso("❌ Erro de comunicação com ViaCEP.");
+        });
+    }
+
+    function salvarTecnicoFormulario() {
+      const payload = {
+        nome: document.getElementById('ipt-tec-nome').value.trim(),
+        endereco: document.getElementById('ipt-tec-end').value.trim(),
+        numero: document.getElementById('ipt-tec-num').value.trim(),
+        bairro: document.getElementById('ipt-tec-bairro').value.trim(),
+        cidade: document.getElementById('ipt-tec-cidade').value.trim(),
+        estado: document.getElementById('ipt-tec-estado').value.trim().toUpperCase(),
+        cep: document.getElementById('ipt-tec-cep').value.trim(),
+        telefone: document.getElementById('ipt-tec-tel').value.trim()
+      };
+      
+      if (!payload.nome) return aviso("⚠️ O Nome do técnico é obrigatório.");
+      
+      const linha = document.getElementById('ipt-tec-linha').value;
+      const btn = document.getElementById('btn-salvar-tec'); 
+      btn.innerHTML = "Salvando..."; btn.disabled = true;
+      
+      if (linha) {
+        google.script.run.withSuccessHandler(res => { 
+          aviso(res); btn.innerHTML = "💾 Salvar Dados"; btn.disabled = false; fecharModalTecnico(); carregarTecnicos(); 
+        }).withFailureHandler(err => { 
+          aviso("❌ " + err.message); btn.innerHTML = "💾 Salvar Dados"; btn.disabled = false; 
+        }).web_atualizarTecnico(linha, payload);
+      } else {
+        google.script.run.withSuccessHandler(res => { 
+          aviso(res); btn.innerHTML = "💾 Salvar Dados"; btn.disabled = false; fecharModalTecnico(); carregarTecnicos(); 
+        }).withFailureHandler(err => { 
+          aviso("❌ " + err.message); btn.innerHTML = "💾 Salvar Dados"; btn.disabled = false; 
+        }).web_adicionarTecnico(payload);
+      }
+    }
+
+    function excluirTecnico(l, n) { 
+      if(confirm(`Excluir o técnico "${n}" definitivamente do sistema?`)) { 
+        aviso("🗑️ Removendo..."); 
+        google.script.run.withSuccessHandler(res => { aviso(res); carregarTecnicos(); }).web_removerTecnico(l); 
+      } 
+    }
   </script>
 </body>
 </html>
