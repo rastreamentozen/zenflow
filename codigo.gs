@@ -3,7 +3,7 @@
 // ====================================================================================
 
 const PLANILHA_ID = "1wcgYDTH7C9vRuu2CE43WMB1Rh0h9xf3JplTJWqQtsZA";
-const ID_PLANILHA_TECNICOS = "1q3WvP7Dc7uEsmbpa7fCCYdkSuiaOEZzo3KaVnAbZUrA";
+const ID_PLANILHA_TECNICOS = "1yrYwyE0iy4aYKHEthMxPF3rOUiygfQkSLqXBzIGtK4I";
 const EMAIL_REMETENTE = "rastreamento@zenseguro.com";
 
 const MAPA_COLUNAS = {
@@ -66,6 +66,7 @@ function solicitarDadosWeb(tela, parametro) {
     if (tela === 'logs') return web_obterDadosLogs(parametro);
     if (tela === 'config') return web_obterConfiguracoes();
     if (tela === 'tecnicos') return web_obterTecnicos();
+    if (tela === 'statusAPI') return web_testarAPIs(); // <--- Rota adicionada!
     return null;
   } catch (erro) {
     return { erro: "Erro Backend: " + erro.message };
@@ -77,7 +78,8 @@ function web_formatarDataSegura(v) {
 }
 
 function web_converterBooleano(v) {
-  return (v === true || v === "TRUE" || v === 1) ? "✔️" : (v === false || v === "FALSE" || v === 0) ? "❌" : String(v || "");
+  return (v === true || v === "TRUE" || v === 1) ?
+    "✔️" : (v === false || v === "FALSE" || v === 0) ? "❌" : String(v || "");
 }
 
 function web_extrairDataParaCalculo(valor) {
@@ -123,7 +125,7 @@ function web_obterDadosDashboard() {
     graficos: { historicoMensal: {}, equipeMes: {} }
   };
 
-  // 1. LER PENDENTES (Abas da Fila)
+  // 1. LER PENDENTES
   ["1 -", "2 -", "3 -"].forEach(nomeFrag => {
     const aba = ss.getSheets().find(s => s.getName().includes(nomeFrag));
     if (aba) {
@@ -141,7 +143,7 @@ function web_obterDadosDashboard() {
     }
   });
 
-  // 2. LER ENVIOS E HISTÓRICO (Aba 4 - Auditoria)
+  // 2. LER ENVIOS E HISTÓRICO
   const aud = ss.getSheetByName("4 -Registro - NÃO ALTERAR");
   if (aud) {
     const dAud = aud.getDataRange().getValues();
@@ -163,7 +165,7 @@ function web_obterDadosDashboard() {
             if (dataCalc) {
               stats.kpis[m.canal].total++;
               stats.kpis[m.canal].etapa[m.etapa]++;
-
+              
               const diffDias = Math.floor((hoje.getTime() - dataCalc.getTime()) / 86400000);
               if (diffDias === 0) stats.kpis[m.canal].hoje++;
               if (diffDias >= 0 && diffDias <= 7) stats.kpis[m.canal].semana++;
@@ -191,7 +193,7 @@ function web_obterDadosDashboard() {
     }
   }
 
-  // 3. LER CONCLUSÕES (Log Concluídos)
+  // 3. LER CONCLUSÕES
   const conc = ss.getSheetByName("Log Concluídos");
   if (conc) {
     const dConc = conc.getDataRange().getValues();
@@ -215,19 +217,18 @@ function exportarDashboardParaSlidesWeb(graficos, statsObj) {
     const timestamp = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm");
     const presentation = SlidesApp.create("Relatório Executivo SGCW - " + timestamp);
     const slideTitulo = presentation.getSlides()[0];
-
-    // Capa
+    
     slideTitulo.insertTextBox("Relatório Executivo - BI\nSGCW OPERACIONAL", 50, 150, 600, 100)
       .getText().getTextStyle().setFontSize(32).setBold(true).setForegroundColor("#4f46e5");
+      
     slideTitulo.insertTextBox("Gerado automaticamente em: " + timestamp, 50, 260, 600, 40)
       .getText().getTextStyle().setFontSize(14).setForegroundColor("#64748b");
-
-    // Slide de Resumo Operacional
+      
     if (statsObj && statsObj.kpis) {
       const slideKpi = presentation.appendSlide(SlidesApp.PredefinedLayout.BLANK);
       slideKpi.insertTextBox("Resumo Operacional", 50, 30, 620, 50)
         .getText().getTextStyle().setFontSize(22).setBold(true).setForegroundColor("#1e293b");
-
+        
       let textoKpi = "📊 NÚMEROS GERAIS DA OPERAÇÃO:\n\n";
       textoKpi += "• Veículos Pendentes de Ação: " + statsObj.kpis.pendentesTotal + "\n";
       textoKpi += "   (Etapa 1: " + statsObj.kpis.pendentesEtapa['1'] + " | Etapa 2: " + statsObj.kpis.pendentesEtapa['2'] + " | Etapa 3: " + statsObj.kpis.pendentesEtapa['3'] + ")\n\n";
@@ -240,12 +241,11 @@ function exportarDashboardParaSlidesWeb(graficos, statsObj) {
       
       textoKpi += "• Conclusões (Instalações Finalizadas): " + statsObj.kpis.conclusaoTotal + "\n";
       textoKpi += "   (Etapa 1: " + statsObj.kpis.conclusaoEtapa['1'] + " | Etapa 2: " + statsObj.kpis.conclusaoEtapa['2'] + " | Etapa 3: " + statsObj.kpis.conclusaoEtapa['3'] + ")\n";
-
+      
       slideKpi.insertTextBox(textoKpi, 50, 100, 620, 350)
         .getText().getTextStyle().setFontSize(14).setForegroundColor("#334155");
     }
 
-    // Gerar um slide novo para cada imagem de gráfico
     graficos.forEach(graf => {
       const slide = presentation.appendSlide(SlidesApp.PredefinedLayout.BLANK);
       slide.insertTextBox(graf.titulo, 50, 30, 620, 50)
@@ -255,11 +255,9 @@ function exportarDashboardParaSlidesWeb(graficos, statsObj) {
       const blob = Utilities.newBlob(Utilities.base64Decode(base64Data), 'image/png', graf.titulo + ".png");
       slide.insertImage(blob, 50, 100, 600, 300);
     });
-
+    
     return { url: presentation.getUrl(), erro: null };
-  } catch (e) {
-    return { url: null, erro: e.message };
-  }
+  } catch (e) { return { url: null, erro: e.message }; }
 }
 
 // ====================================================================================
@@ -298,28 +296,16 @@ function obterFeriadosDoAno(ano) {
     return new Date(year, mes - 1, dia);
   };
   const pascoa = calcularPascoa(ano);
-  const addDias = (data, dias) => {
-    const nd = new Date(data.getTime());
-    nd.setDate(nd.getDate() + dias);
-    return nd;
-  };
+  const addDias = (data, dias) => { const nd = new Date(data.getTime()); nd.setDate(nd.getDate() + dias); return nd; };
   
   feriados.push(formatar(addDias(pascoa, -48)));
   feriados.push(formatar(addDias(pascoa, -47)));
   feriados.push(formatar(addDias(pascoa, -2)));
   feriados.push(formatar(addDias(pascoa, 60)));
-
-  function formatar(d) {
-    const dd = String(d.getDate()).padStart(2, '0');
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    return `${dd}/${mm}/${ano}`;
-  }
-
-  const fixos = [
-    `01/01/${ano}`, `21/04/${ano}`, `23/04/${ano}`, `01/05/${ano}`, `24/06/${ano}`,
-    `07/09/${ano}`, `12/10/${ano}`, `02/11/${ano}`, `15/11/${ano}`, `20/11/${ano}`,
-    `22/11/${ano}`, `25/12/${ano}`
-  ];
+  function formatar(d) { const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0'); return `${dd}/${mm}/${ano}`; }
+  
+  const fixos = [ `01/01/${ano}`, `21/04/${ano}`, `23/04/${ano}`, `01/05/${ano}`, `24/06/${ano}`, `07/09/${ano}`, `12/10/${ano}`, `02/11/${ano}`, `15/11/${ano}`, `20/11/${ano}`, `22/11/${ano}`, `25/12/${ano}` ];
   return [...feriados, ...fixos];
 }
 
@@ -331,7 +317,6 @@ function calcularDiasUteis(dataInicial, dataFinal, arrayFeriadosPersonalizadosTi
   dFinal.setHours(0, 0, 0, 0);
   
   const cacheFeriados = {};
-  
   while (dataAtual < dFinal) {
     dataAtual.setDate(dataAtual.getDate() + 1);
     let diaSemana = dataAtual.getDay();
@@ -343,9 +328,7 @@ function calcularDiasUteis(dataInicial, dataFinal, arrayFeriadosPersonalizadosTi
       const strDataAtual = `${dd}/${mm}/${anoAtual}`;
       
       let ehFeriado = cacheFeriados[anoAtual].includes(strDataAtual);
-      if (!ehFeriado && arrayFeriadosPersonalizadosTime && arrayFeriadosPersonalizadosTime.includes(dataAtual.getTime())) {
-        ehFeriado = true;
-      }
+      if (!ehFeriado && arrayFeriadosPersonalizadosTime && arrayFeriadosPersonalizadosTime.includes(dataAtual.getTime())) ehFeriado = true;
       if (!ehFeriado) diasUteis++;
     }
   }
@@ -363,13 +346,11 @@ function cadastrarLoteWeb(loteDeClientes) {
     const aba3 = ss.getSheets().find(s => s.getName().includes("3 -"));
     
     if (!aba1 || !aba2 || !aba3) return "❌ Erro: Abas de operação não encontradas.";
-
+    
     let feriadosTime = [];
     const abaFeriados = ss.getSheetByName("Feriados");
     if (abaFeriados) {
-      feriadosTime = abaFeriados.getRange("A2:A").getValues()
-        .map(r => r[0] instanceof Date ? r[0].getTime() : null)
-        .filter(r => r);
+      feriadosTime = abaFeriados.getRange("A2:A").getValues().map(r => r[0] instanceof Date ? r[0].getTime() : null).filter(r => r);
     }
 
     const chassisNoSistema = new Set();
@@ -381,21 +362,15 @@ function cadastrarLoteWeb(loteDeClientes) {
         if (dados[i][MAPA_COLUNAS.PLACA]) placasNoSistema.add(String(dados[i][MAPA_COLUNAS.PLACA]).trim().toUpperCase());
       }
     });
-
+    
     const token = autenticarHINOVA();
     if (!token) return "❌ Erro: Falha na autenticação com a Hinova.";
-
+    
     const requests = loteDeClientes.map(cli => {
       const vb = cli.chassi || cli.placa;
       const pb = cli.chassi ? "chassi" : "placa";
-      return {
-        url: `${SGA_CONFIG.URL_CONSULTA_BASE}${encodeURIComponent(vb)}/${pb}`,
-        method: "get",
-        headers: { "Authorization": "Bearer " + token },
-        muteHttpExceptions: true
-      };
+      return { url: `${SGA_CONFIG.URL_CONSULTA_BASE}${encodeURIComponent(vb)}/${pb}`, method: "get", headers: { "Authorization": "Bearer " + token }, muteHttpExceptions: true };
     });
-
     const responses = UrlFetchApp.fetchAll(requests);
     const qtdColunasParaInserir = Math.max(aba1.getLastColumn(), 20) - 1;
     const dtHoje = new Date();
@@ -403,15 +378,11 @@ function cadastrarLoteWeb(loteDeClientes) {
     
     let contInseridos = 0, contDuplicados = 0, contIgnoradosStatus = 0;
     const lotesPorAba = { 1: [], 2: [], 3: [] };
-
+    
     loteDeClientes.forEach((cliente, index) => {
       const chassiCli = String(cliente.chassi || "").trim().toUpperCase();
       const placaCli = String(cliente.placa || "").trim().toUpperCase();
-      
-      if ((chassiCli && chassisNoSistema.has(chassiCli)) || (placaCli && placasNoSistema.has(placaCli))) {
-        contDuplicados++;
-        return;
-      }
+      if ((chassiCli && chassisNoSistema.has(chassiCli)) || (placaCli && placasNoSistema.has(placaCli))) { contDuplicados++; return; }
 
       let classificacaoSGA = null;
       try {
@@ -421,10 +392,7 @@ function cadastrarLoteWeb(loteDeClientes) {
         }
       } catch (e) { }
 
-      if (classificacaoSGA !== "14") {
-        contIgnoradosStatus++;
-        return;
-      }
+      if (classificacaoSGA !== "14") { contIgnoradosStatus++; return; }
 
       let dataCriacao = web_extrairDataParaCalculo(cliente.data) || dtHoje;
       let diasUteis = calcularDiasUteis(dataCriacao, dtHoje, feriadosTime);
@@ -445,31 +413,24 @@ function cadastrarLoteWeb(loteDeClientes) {
       if (chassiCli) chassisNoSistema.add(chassiCli);
       if (placaCli) placasNoSistema.add(placaCli);
     });
-
+    
     const inserirNaAba = (aba, matriz) => {
       if (matriz.length === 0) return;
       const nomes = aba.getRange("C1:C").getValues();
       let ultimaLinhaReal = 1;
       for (let j = nomes.length - 1; j >= 0; j--) {
-        if (String(nomes[j][0]).trim() !== "") {
-          ultimaLinhaReal = j + 1;
-          break;
-        }
+        if (String(nomes[j][0]).trim() !== "") { ultimaLinhaReal = j + 1; break; }
       }
       aba.getRange(ultimaLinhaReal + 1, 2, matriz.length, qtdColunasParaInserir).setValues(matriz);
     };
-
-    inserirNaAba(aba1, lotesPorAba[1]);
-    inserirNaAba(aba2, lotesPorAba[2]);
-    inserirNaAba(aba3, lotesPorAba[3]);
+    
+    inserirNaAba(aba1, lotesPorAba[1]); inserirNaAba(aba2, lotesPorAba[2]); inserirNaAba(aba3, lotesPorAba[3]);
 
     let msg = `✅ Inteligência Processou!\n📥 ${contInseridos} roteados.`;
     if (contDuplicados > 0) msg += `\n⚠️ ${contDuplicados} duplicados ignorados.`;
     if (contIgnoradosStatus > 0) msg += `\n🚫 ${contIgnoradosStatus} barrados (Não Pendentes).`;
     return msg;
-  } catch (e) {
-    return "❌ Erro Crítico no Motor: " + e.message;
-  }
+  } catch (e) { return "❌ Erro Crítico no Motor: " + e.message; }
 }
 
 function web_obterFilaGeral() {
@@ -504,7 +465,7 @@ function web_obterFilaGeral() {
 
       let cidade = "", bairro = "";
       let tecnicoDisp = "", tecnicoDist = "", tecnicoTempo = "";
-
+      
       if (notaEstado.includes("Cidade:")) {
         const parts = notaEstado.split("\n");
         cidade = parts[0] ? parts[0].replace("📍 Cidade:", "").trim() : "";
@@ -532,7 +493,7 @@ function web_obterFilaGeral() {
       }
 
       fila.push({
-        idUnico: nomeAba + "-" + (i + 1), // ID ÚNICO INFALÍVEL
+        idUnico: nomeAba + "-" + (i + 1), 
         etapaNum: numEtapa, linhaOriginal: i + 1, abaNome: nomeAba, nome: nome, placa: placa, chassi: chassi,
         fipe: l[MAPA_COLUNAS.FIPE] ? String(l[MAPA_COLUNAS.FIPE]).trim() : "",
         email: l[MAPA_COLUNAS.EMAIL] ? String(l[MAPA_COLUNAS.EMAIL]).trim() : "",
@@ -575,7 +536,7 @@ function processarItemLoteWeb(cli, comando) {
   const codMoto = ["3", "126", "115", "100", "105", "127", "116", "32", "33", "34", "35", "95", "96", "97"];
   
   try {
-    // FUNÇÃO 1: LOGÍSTICA (Apenas roda isso e retorna)
+    // LOGÍSTICA ATUALIZADA P/ 8 COLUNAS
     if (comando === "logistica") {
       const est = String(aba.getRange(linha, MAPA_COLUNAS.ESTADO + 1).getValue()).trim().toUpperCase();
       if (est !== "" && est !== "RJ") {
@@ -584,7 +545,7 @@ function processarItemLoteWeb(cli, comando) {
         
         if (notaEndereço && notaEndereço.indexOf("Cidade:") !== -1) {
           const ssTec = SpreadsheetApp.openById(ID_PLANILHA_TECNICOS);
-          const listaTecnicos = ssTec.getSheets()[0].getDataRange().getValues().slice(1).filter(t => t[0] && t[1]);
+          const listaTecnicos = ssTec.getSheets()[0].getDataRange().getValues().slice(1).filter(t => t[0]); // Filtra se tem nome
           
           const cidadeMatch = notaEndereço.match(/Cidade:\s*(.*)/);
           const bairroMatch = notaEndereço.match(/Bairro:\s*(.*)/);
@@ -595,11 +556,19 @@ function processarItemLoteWeb(cli, comando) {
           let melhorDistancia = Infinity;
           let melhorTecnico = null;
           let melhorTempoSeg = 0;
-
+          
           listaTecnicos.forEach(tecnico => {
             try {
+              const logradouro = tecnico[1] || "";
+              const numero = tecnico[2] || "";
+              const bairro = tecnico[3] || "";
+              const cidade = tecnico[4] || "";
+              const estado = tecnico[5] || "";
+              const cep = tecnico[6] || "";
+              const origemCompleta = `${logradouro}, ${numero} - ${bairro}, ${cidade} - ${estado}, ${cep}, Brasil`;
+
               const direcoes = Maps.newDirectionFinder()
-                .setOrigin(tecnico[1])
+                .setOrigin(origemCompleta)
                 .setDestination(enderecoDestino)
                 .setMode(Maps.DirectionFinder.Mode.DRIVING)
                 .getDirections();
@@ -614,13 +583,12 @@ function processarItemLoteWeb(cli, comando) {
               }
             } catch (e) {}
           });
-
+          
           if (melhorTecnico) {
             const distKm = (melhorDistancia / 1000).toFixed(1);
             const h = Math.floor(melhorTempoSeg / 3600);
             const m = Math.floor((melhorTempoSeg % 3600) / 60);
             const tempoFormatado = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-            
             const notaLimpa = notaEndereço.split("\n\n--- 🛰️ LOGÍSTICA ---")[0];
             celulaEstado.setNote(notaLimpa + "\n\n--- 🛰️ LOGÍSTICA ---\n" + `Técnico Disponível: "${melhorTecnico}" - ${distKm} Km / ${tempoFormatado} de distância de carro`);
             return { status: 'ok', msg: 'Rota calculada' };
@@ -630,7 +598,6 @@ function processarItemLoteWeb(cli, comando) {
       return { status: 'ignorado', msg: 'Apenas p/ Fora RJ' };
     }
 
-    // FUNÇÕES 2: SGA HINOVA (Motos, Inativos, Fipe, Completar, Estados)
     const resp = UrlFetchApp.fetch(`${SGA_CONFIG.URL_CONSULTA_BASE}${encodeURIComponent(vb)}/${pb}`, { "method": "get", "headers": { "Authorization": "Bearer " + token }, "muteHttpExceptions": true });
     
     if (resp.getResponseCode() === 200) {
@@ -661,7 +628,6 @@ function processarItemLoteWeb(cli, comando) {
           const fTexto = v.valor_fipe || "";
           const f = parseFloat(String(fTexto).replace(/\./g, '').replace(',', '.')) || 0;
           if (fTexto) aba.getRange(linha, MAPA_COLUNAS.FIPE + 1).setValue(fTexto);
-          
           if ((codMoto.includes(String(v.codigo_tipo_veiculo)) && f > 0 && f < 20000) || (!codMoto.includes(String(v.codigo_tipo_veiculo)) && f > 0 && f < 30000)) {
             aba.getRange(linha, MAPA_COLUNAS.FIPE_BAIXA + 1).setValue(true);
             alterado = true;
@@ -683,6 +649,7 @@ function processarItemLoteWeb(cli, comando) {
               const aD = (Array.isArray(jA) && jA.length > 0) ? jA[0] : jA;
               const est = aD.estado ? String(aD.estado).trim().toUpperCase() : "N/A";
               aba.getRange(linha, MAPA_COLUNAS.ESTADO + 1).setValue(est).setNote(`📍 Cidade: ${aD.cidade || ""}\n🏘️ Bairro: ${aD.bairro || ""}`);
+              
               if (est !== "RJ" && est !== "N/A") {
                 aba.getRange(linha, MAPA_COLUNAS.TECNICO_INDISPONIVEL + 1).setValue(true);
                 alterado = true;
@@ -694,9 +661,7 @@ function processarItemLoteWeb(cli, comando) {
       }
     }
     return { status: 'ignorado', msg: 'Nenhum dado na consulta' };
-  } catch (e) { 
-    return { status: 'erro', msg: e.message }; 
-  }
+  } catch (e) { return { status: 'erro', msg: e.message }; }
 }
 
 // ====================================================================================
@@ -726,7 +691,6 @@ function obterPreviewDisparoAgrupadoWeb(grupos) {
     }
 
     const htmlBodyFormatado = formatarComoEmail(txt, tituloHeader);
-    
     let cabecalhoWhatsApp = templatesDict["WHATSAPP_DISCLAIMER"] || "";
     let msgWhats = "";
     if (cabecalhoWhatsApp && cabecalhoWhatsApp.indexOf("⚠️ Erro:") === -1) {
@@ -738,7 +702,7 @@ function obterPreviewDisparoAgrupadoWeb(grupos) {
     let telefoneBase = g.linhas[0].telefone || "";
     let numeroLimpo = telefoneBase.toString().replace(/\D/g, "");
     if (numeroLimpo.length >= 10 && !numeroLimpo.startsWith("55")) numeroLimpo = "55" + numeroLimpo;
-
+    
     return { email: g.email, nome: g.nome, veiculosStr: g.veiculosStr, etapaNum: g.etapaNum, assunto: ass, emailHtml: htmlBodyFormatado, whatsText: msgWhats, telefoneLimpo: numeroLimpo };
   });
 }
@@ -747,7 +711,6 @@ function dispararEmailAgrupadoWeb(grupos, responsavel) {
   const ss = SpreadsheetApp.openById(PLANILHA_ID);
   const dt = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm");
   const templatesDict = getTemplatesDict(ss);
-  
   let errosCriticos = [];
 
   grupos.forEach(g => {
@@ -774,7 +737,6 @@ function dispararEmailAgrupadoWeb(grupos, responsavel) {
 
     try {
       const htmlBodyFormatado = formatarComoEmail(txt, tituloHeader);
-      
       MailApp.sendEmail({
         to: g.email,
         subject: ass,
@@ -782,7 +744,6 @@ function dispararEmailAgrupadoWeb(grupos, responsavel) {
         htmlBody: htmlBodyFormatado,
         name: "Setor de Rastreamento - ZEN Seguros"
       });
-
       g.linhas.forEach(cli => {
         const aba = ss.getSheetByName(cli.abaNome);
         if (aba) {
@@ -801,16 +762,13 @@ function dispararEmailAgrupadoWeb(grupos, responsavel) {
     }
   });
 
-  if (errosCriticos.length > 0) {
-    throw new Error("\n" + errosCriticos.join("\n\n"));
-  }
+  if (errosCriticos.length > 0) throw new Error("\n" + errosCriticos.join("\n\n"));
   return `E-mail enviado com sucesso!`;
 }
 
 function marcarWhatsAgrupadoWeb(grupos, responsavel) {
   const ss = SpreadsheetApp.openById(PLANILHA_ID);
   const dt = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm");
-  
   grupos.forEach(g => {
     let ac = g.etapaNum === 1 ? "1_WHATS" : g.etapaNum === 2 ? "2_WHATS" : "3_WHATS";
     g.linhas.forEach(cli => {
@@ -843,7 +801,7 @@ function formatarComoEmail(textoHtmlOriginal, tituloEmail) {
 }
 
 // ====================================================================================
-// ROTINAS GLOBAIS, AUTENTICAÇÃO E UTILITÁRIOS
+// ROTINAS GLOBAIS E UTILITÁRIOS
 // ====================================================================================
 function executarFerramentaWebGlobal(comando) {
   try {
@@ -851,23 +809,17 @@ function executarFerramentaWebGlobal(comando) {
     if (comando === "sincronizar_erros") { conciliarErrosMailerDaemon(); return "✅ Caixa do Gmail mapeada!"; }
     if (comando === "varrer_concluidos") { return varrerConcluidosGlobalWeb(); }
     return "⚠️ Comando não reconhecido.";
-  } catch (e) {
-    return "❌ Erro API: " + e.message;
-  }
+  } catch (e) { return "❌ Erro API: " + e.message; }
 }
 
 function autenticarHINOVA() {
   const cache = CacheService.getScriptCache();
   const tokenCache = cache.get("HINOVA_TOKEN");
   if (tokenCache) return tokenCache;
-
   try {
     const options = {
       "method": "post",
-      "headers": {
-        "Authorization": "Bearer " + SGA_CONFIG.TOKEN_ASSOCIACAO,
-        "Content-Type": "application/json"
-      },
+      "headers": { "Authorization": "Bearer " + SGA_CONFIG.TOKEN_ASSOCIACAO, "Content-Type": "application/json" },
       "payload": JSON.stringify({ "usuario": SGA_CONFIG.USUARIO, "senha": SGA_CONFIG.SENHA }),
       "muteHttpExceptions": true
     };
@@ -875,9 +827,7 @@ function autenticarHINOVA() {
     if (resp.getResponseCode() !== 200) return null;
     
     const token = JSON.parse(resp.getContentText()).token_usuario || null;
-    if (token) {
-      cache.put("HINOVA_TOKEN", token, 3600);
-    }
+    if (token) cache.put("HINOVA_TOKEN", token, 3600);
     return token;
   } catch (e) { return null; }
 }
@@ -885,12 +835,10 @@ function autenticarHINOVA() {
 function varrerConcluidosGlobalWeb() {
   const token = autenticarHINOVA();
   if (!token) return "❌ Falha na autenticação com a Hinova.";
-  
   const ss = SpreadsheetApp.openById(PLANILHA_ID);
   const dt = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm");
   let contConcluidos = 0;
   let logSheet = ss.getSheetByName("Log Concluídos") || ss.insertSheet("Log Concluídos");
-  
   const todosClientes = [];
   ["1 -", "2 -", "3 -"].forEach(nomeFrag => {
     const aba = ss.getSheets().find(s => s.getName().includes(nomeFrag));
@@ -909,20 +857,13 @@ function varrerConcluidosGlobalWeb() {
       }
     }
   });
-
   if (todosClientes.length === 0) return "Nenhum cliente na fila para varrer.";
-
   const requests = todosClientes.map(cli => ({
-    url: `${SGA_CONFIG.URL_CONSULTA_BASE}${encodeURIComponent(cli.identificador)}/${cli.tipoBusca}`,
-    method: "get",
-    headers: { "Authorization": "Bearer " + token },
-    muteHttpExceptions: true
+    url: `${SGA_CONFIG.URL_CONSULTA_BASE}${encodeURIComponent(cli.identificador)}/${cli.tipoBusca}`, method: "get", headers: { "Authorization": "Bearer " + token }, muteHttpExceptions: true
   }));
-
   const responses = UrlFetchApp.fetchAll(requests);
   const linhasParaDeletar = {};
   const dadosParaLog = [];
-
   todosClientes.forEach((cli, index) => {
     try {
       if (responses[index].getResponseCode() === 200) {
@@ -936,12 +877,10 @@ function varrerConcluidosGlobalWeb() {
       }
     } catch (e) { }
   });
-
   if (dadosParaLog.length > 0) {
     const ultimaLinhaLog = logSheet.getLastRow() || 1;
     logSheet.getRange(ultimaLinhaLog + 1, 1, dadosParaLog.length, dadosParaLog[0].length).setValues(dadosParaLog);
   }
-
   for (const abaNome in linhasParaDeletar) {
     const aba = ss.getSheetByName(abaNome);
     if (aba) {
@@ -957,10 +896,7 @@ function atualizarMarcacaoWeb(abaNome, linha, campo, valorBooleano) {
     const aba = SpreadsheetApp.openById(PLANILHA_ID).getSheetByName(abaNome);
     if (!aba) return "Aba não encontrada.";
     let col = campo === 'fipeBaixa' ? MAPA_COLUNAS.FIPE_BAIXA + 1 : campo === 'tecnicoIndisp' ? MAPA_COLUNAS.TECNICO_INDISPONIVEL + 1 : campo === 'respEmail' ? MAPA_COLUNAS.RESPONDEU_EMAIL + 1 : campo === 'respWhats' ? MAPA_COLUNAS.RESPONDEU_WHATS + 1 : 0;
-    if (col > 0) {
-      aba.getRange(linha, col).setValue(valorBooleano);
-      return "✅ Salvo na planilha!";
-    }
+    if (col > 0) { aba.getRange(linha, col).setValue(valorBooleano); return "✅ Salvo na planilha!"; }
     return "Campo inválido.";
   } catch (e) { return "❌ Erro: " + e.message; }
 }
@@ -970,7 +906,6 @@ function marcarComoEnviadoWeb(clientesSelecionados, responsavel) {
   const ss = SpreadsheetApp.openById(PLANILHA_ID);
   const dt = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm");
   let cont = 0;
-  
   clientesSelecionados.forEach(cli => {
     const aba = ss.getSheetByName(cli.abaNome);
     if (!aba) return;
@@ -989,17 +924,12 @@ function web_obterConfiguracoes() {
   if (!aba) return [];
   const dados = aba.getDataRange().getValues();
   const configs = [];
-  for (let i = 1; i < dados.length; i++) {
-    if (dados[i][0]) configs.push({ linhaOriginal: i + 1, chave: String(dados[i][0]), texto: dados[i][1] ? String(dados[i][1]) : "" });
-  }
+  for (let i = 1; i < dados.length; i++) { if (dados[i][0]) configs.push({ linhaOriginal: i + 1, chave: String(dados[i][0]), texto: dados[i][1] ? String(dados[i][1]) : "" }); }
   return JSON.parse(JSON.stringify(configs));
 }
 
 function salvarConfiguracaoWeb(linha, novoTexto) {
-  try {
-    SpreadsheetApp.openById(PLANILHA_ID).getSheetByName("⚙️ Configurações").getRange(linha, 2).setValue(novoTexto);
-    return "✅ Template atualizado!";
-  } catch (e) { return "❌ Erro: " + e.message; }
+  try { SpreadsheetApp.openById(PLANILHA_ID).getSheetByName("⚙️ Configurações").getRange(linha, 2).setValue(novoTexto); return "✅ Template atualizado!"; } catch (e) { return "❌ Erro: " + e.message; }
 }
 
 // ====================================================================================
@@ -1010,11 +940,8 @@ function sinalizarErroEmail(aba, numeroLinha, motivo, dataHora) {
   var abaErro = ss.getSheetByName("Erro") || ss.insertSheet("Erro");
   var dados = aba.getRange(numeroLinha, 1, 1, aba.getLastColumn()).getValues()[0];
   var emailAtual = dados[MAPA_COLUNAS.EMAIL] ? String(dados[MAPA_COLUNAS.EMAIL]).toLowerCase().trim() : "";
-  
   if (emailAtual !== "") {
-    var linhaParaErro = dados.slice();
-    linhaParaErro.push("FALHA: " + motivo);
-    linhaParaErro.push(dataHora);
+    var linhaParaErro = dados.slice(); linhaParaErro.push("FALHA: " + motivo); linhaParaErro.push(dataHora);
     abaErro.appendRow(linhaParaErro);
   }
   aba.getRange(numeroLinha, MAPA_COLUNAS.EMAIL + 1).setFontColor("#FF0000").setFontWeight("bold").setNote("⚠️ Erro: " + motivo);
@@ -1023,288 +950,114 @@ function sinalizarErroEmail(aba, numeroLinha, motivo, dataHora) {
 function registrarAuditoriaExata(nome, placa, chassi, email, telefone, chaveAcao, dataHora, responsavel) {
   var abaAuditoria = SpreadsheetApp.openById(PLANILHA_ID).getSheetByName("4 -Registro - NÃO ALTERAR");
   if (!abaAuditoria) return;
-  
-  const MAPA_AUDITORIA = {
-    "1_EMAIL": { check: "1- E-mail (boas vindas)", data: "1- Enviado e-mail em:", resp: "1-Responsável (boas vindas)" },
-    "1_WHATS": { check: "1-Whatsapp (boas vindas)", data: "1 -Enviado whats em:", resp: "1-Responsável (boas vindas)" },
-    "2_EMAIL": { check: "2- E-mail (5 dias)", data: "2- Enviado e-mail em:", resp: "2-Responsável (5 dias)" },
-    "2_WHATS": { check: "2-Whatsapp (5 dias)", data: "2 -Enviado whats em:", resp: "2-Responsável (5 dias)" },
-    "3_EMAIL": { check: "3- E-mail (prazo)", data: "3- Enviado e-mail em:", resp: "3-Responsável (prazo)" },
-    "3_WHATS": { check: "3-Whatsapp (prazo)", data: "3 -Enviado whats em:", resp: "3-Responsável (prazo)" }
-  };
-  
+  const MAPA_AUDITORIA = { "1_EMAIL": { check: "1- E-mail (boas vindas)", data: "1- Enviado e-mail em:", resp: "1-Responsável (boas vindas)" }, "1_WHATS": { check: "1-Whatsapp (boas vindas)", data: "1 -Enviado whats em:", resp: "1-Responsável (boas vindas)" }, "2_EMAIL": { check: "2- E-mail (5 dias)", data: "2- Enviado e-mail em:", resp: "2-Responsável (5 dias)" }, "2_WHATS": { check: "2-Whatsapp (5 dias)", data: "2 -Enviado whats em:", resp: "2-Responsável (5 dias)" }, "3_EMAIL": { check: "3- E-mail (prazo)", data: "3- Enviado e-mail em:", resp: "3-Responsável (prazo)" }, "3_WHATS": { check: "3-Whatsapp (prazo)", data: "3 -Enviado whats em:", resp: "3-Responsável (prazo)" } };
   if (!MAPA_AUDITORIA[chaveAcao]) return;
-  
   var cabecalho = abaAuditoria.getRange(1, 1, 1, abaAuditoria.getLastColumn()).getValues()[0].map(x => x ? String(x).trim() : "");
-  var cChk = cabecalho.indexOf(MAPA_AUDITORIA[chaveAcao].check.trim());
-  var cDat = cabecalho.indexOf(MAPA_AUDITORIA[chaveAcao].data.trim());
-  var cRes = cabecalho.indexOf(MAPA_AUDITORIA[chaveAcao].resp.trim());
-  var cNom = cabecalho.indexOf("Nome");
-  var cPla = cabecalho.indexOf("Placa");
-  var cCha = cabecalho.indexOf("Chassi");
-  var cEma = cabecalho.indexOf("E-mail") > -1 ? cabecalho.indexOf("E-mail") : cabecalho.indexOf("Email");
-  var cTel = cabecalho.indexOf("Telefone");
-  
-  var uLinha = abaAuditoria.getLastRow();
-  var dados = uLinha > 1 ? abaAuditoria.getRange(2, 1, uLinha - 1, abaAuditoria.getLastColumn()).getValues() : [];
+  var cChk = cabecalho.indexOf(MAPA_AUDITORIA[chaveAcao].check.trim()), cDat = cabecalho.indexOf(MAPA_AUDITORIA[chaveAcao].data.trim()), cRes = cabecalho.indexOf(MAPA_AUDITORIA[chaveAcao].resp.trim());
+  var cNom = cabecalho.indexOf("Nome"), cPla = cabecalho.indexOf("Placa"), cCha = cabecalho.indexOf("Chassi"), cEma = cabecalho.indexOf("E-mail") > -1 ? cabecalho.indexOf("E-mail") : cabecalho.indexOf("Email"), cTel = cabecalho.indexOf("Telefone");
+  var uLinha = abaAuditoria.getLastRow(), dados = uLinha > 1 ? abaAuditoria.getRange(2, 1, uLinha - 1, abaAuditoria.getLastColumn()).getValues() : [];
   var lAlvo = -1;
-  
-  for (var i = 0; i < dados.length; i++) {
-    if ((placa && String(dados[i][cPla]).trim() === placa) || (chassi && String(dados[i][cCha]).trim() === chassi)) {
-      lAlvo = i + 2;
-      break;
-    }
-  }
-  
-  if (lAlvo === -1) {
-    lAlvo = uLinha + 1;
-    if (cNom > -1) abaAuditoria.getRange(lAlvo, cNom + 1).setValue(nome);
-    if (cPla > -1) abaAuditoria.getRange(lAlvo, cPla + 1).setValue(placa);
-    if (cCha > -1) abaAuditoria.getRange(lAlvo, cCha + 1).setValue(chassi);
-    if (cEma > -1) abaAuditoria.getRange(lAlvo, cEma + 1).setValue(email);
-    if (cTel > -1) abaAuditoria.getRange(lAlvo, cTel + 1).setValue(telefone);
-  }
-  
+  for (var i = 0; i < dados.length; i++) { if ((placa && String(dados[i][cPla]).trim() === placa) || (chassi && String(dados[i][cCha]).trim() === chassi)) { lAlvo = i + 2; break; } }
+  if (lAlvo === -1) { lAlvo = uLinha + 1;
+  if (cNom > -1) abaAuditoria.getRange(lAlvo, cNom + 1).setValue(nome); if (cPla > -1) abaAuditoria.getRange(lAlvo, cPla + 1).setValue(placa);
+  if (cCha > -1) abaAuditoria.getRange(lAlvo, cCha + 1).setValue(chassi); if (cEma > -1) abaAuditoria.getRange(lAlvo, cEma + 1).setValue(email);
+  if (cTel > -1) abaAuditoria.getRange(lAlvo, cTel + 1).setValue(telefone); }
   if (cChk > -1) abaAuditoria.getRange(lAlvo, cChk + 1).setValue(true);
-  if (cDat > -1) abaAuditoria.getRange(lAlvo, cDat + 1).setValue(dataHora);
-  if (cRes > -1 && responsavel) abaAuditoria.getRange(lAlvo, cRes + 1).setValue(responsavel);
+  if (cDat > -1) abaAuditoria.getRange(lAlvo, cDat + 1).setValue(dataHora); if (cRes > -1 && responsavel) abaAuditoria.getRange(lAlvo, cRes + 1).setValue(responsavel);
 }
 
 function conciliarErrosMailerDaemon() {
-  const ss = SpreadsheetApp.openById(PLANILHA_ID);
-  const abaErro = ss.getSheetByName("Erro") || ss.insertSheet("Erro");
-  let threads;
-  
-  try {
-    threads = GmailApp.search('(from:mailer-daemon OR from:postmaster) subject:("Delivery" OR "Failure" OR "Falha" OR "Undeliverable" OR "Returned" OR "Undelivered") newer_than:2d', 0, 50);
-  } catch (e) { return; }
-  
+  const ss = SpreadsheetApp.openById(PLANILHA_ID); const abaErro = ss.getSheetByName("Erro") || ss.insertSheet("Erro"); let threads;
+  try { threads = GmailApp.search('(from:mailer-daemon OR from:postmaster) subject:("Delivery" OR "Failure" OR "Falha" OR "Undeliverable" OR "Returned" OR "Undelivered") newer_than:2d', 0, 50); } catch (e) { return; }
   if (threads.length === 0) return;
-  
   const errosDet = {};
-  threads.forEach(t => {
-    t.getMessages().forEach(m => {
-      const c = m.getPlainBody();
-      const match = c.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/g);
-      if (match) {
-        match.forEach(em => {
-          let e = em.toLowerCase().trim();
-          if (!e.includes("postmaster") && !e.includes("mailer-daemon")) errosDet[e] = "Falha na entrega";
-        });
-      }
-    });
-  });
-  
+  threads.forEach(t => { t.getMessages().forEach(m => { const c = m.getPlainBody(); const match = c.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/g); if (match) { match.forEach(em => { let e = em.toLowerCase().trim(); if (!e.includes("postmaster") && !e.includes("mailer-daemon")) errosDet[e] = "Falha na entrega"; }); } }); });
   const abas = ss.getSheets();
   for (let a = 0; a < abas.length; a++) {
     if (abas[a].getName().includes("1 -") || abas[a].getName().includes("2 -") || abas[a].getName().includes("3 -")) {
       const d = abas[a].getDataRange().getValues();
-      for (let j = d.length - 1; j >= 1; j--) {
-        const em = d[j][MAPA_COLUNAS.EMAIL] ? String(d[j][MAPA_COLUNAS.EMAIL]).toLowerCase().trim() : "";
-        if (em && errosDet[em]) {
-          abas[a].getRange(j + 1, MAPA_COLUNAS.EMAIL + 1).setFontColor("#FF0000").setFontWeight("bold").setNote("⚠️ Erro: " + errosDet[em]);
-        }
-      }
+      for (let j = d.length - 1; j >= 1; j--) { const em = d[j][MAPA_COLUNAS.EMAIL] ? String(d[j][MAPA_COLUNAS.EMAIL]).toLowerCase().trim() : "";
+      if (em && errosDet[em]) { abas[a].getRange(j + 1, MAPA_COLUNAS.EMAIL + 1).setFontColor("#FF0000").setFontWeight("bold").setNote("⚠️ Erro: " + errosDet[em]); } }
     }
   }
 }
 
 function auditarVisualAba4() {
-  const ss = SpreadsheetApp.openById(PLANILHA_ID);
-  const a4 = ss.getSheetByName("4 -Registro - NÃO ALTERAR");
+  const ss = SpreadsheetApp.openById(PLANILHA_ID), a4 = ss.getSheetByName("4 -Registro - NÃO ALTERAR");
   if (!a4) return;
-  
-  const aConc = ss.getSheetByName("Log Concluídos");
-  const aSit = ss.getSheetByName("6 -Situação");
-  const aErr = ss.getSheetByName("Erro");
-  
+  const aConc = ss.getSheetByName("Log Concluídos"), aSit = ss.getSheetByName("6 -Situação"), aErr = ss.getSheetByName("Erro");
   const sC = new Set(), sI = new Set(), sE = new Set();
-  
-  if (aConc) {
-    const d = aConc.getDataRange().getValues();
-    for (let i = 1; i < d.length; i++) {
-      if (d[i][2]) sC.add(String(d[i][2]).trim().toUpperCase());
-      if (d[i][3]) sC.add(String(d[i][3]).trim().toUpperCase());
-    }
-  }
-  
-  if (aSit) {
-    const d = aSit.getDataRange().getValues();
-    for (let i = 1; i < d.length; i++) {
-      const c = String(d[i][6]).trim();
-      if (c && c !== "1" && c !== "14") {
-        if (d[i][2]) sI.add(String(d[i][2]).trim().toUpperCase());
-        if (d[i][3]) sI.add(String(d[i][3]).trim().toUpperCase());
-      }
-    }
-  }
-  
-  if (aErr) {
-    const d = aErr.getDataRange().getValues();
-    for (let i = 1; i < d.length; i++) {
-      const e = String(d[i][MAPA_COLUNAS.EMAIL]).trim().toLowerCase();
-      if (e) sE.add(e);
-    }
-  }
-  
-  const d4 = a4.getDataRange().getValues();
-  if (d4.length < 2) return;
-  
-  const cab = d4[0].map(c => String(c).trim());
-  const iN = cab.indexOf("Nome"), iP = cab.indexOf("Placa"), iC = cab.indexOf("Chassi"), iE = cab.findIndex(c => c === "E-mail" || c === "Email");
+  if (aConc) { const d = aConc.getDataRange().getValues();
+  for (let i = 1; i < d.length; i++) { if (d[i][2]) sC.add(String(d[i][2]).trim().toUpperCase()); if (d[i][3]) sC.add(String(d[i][3]).trim().toUpperCase()); } }
+  if (aSit) { const d = aSit.getDataRange().getValues();
+  for (let i = 1; i < d.length; i++) { const c = String(d[i][6]).trim();
+  if (c && c !== "1" && c !== "14") { if (d[i][2]) sI.add(String(d[i][2]).trim().toUpperCase()); if (d[i][3]) sI.add(String(d[i][3]).trim().toUpperCase()); } } }
+  if (aErr) { const d = aErr.getDataRange().getValues();
+  for (let i = 1; i < d.length; i++) { const e = String(d[i][MAPA_COLUNAS.EMAIL]).trim().toLowerCase(); if (e) sE.add(e); } }
+  const d4 = a4.getDataRange().getValues(); if (d4.length < 2) return;
+  const cab = d4[0].map(c => String(c).trim()), iN = cab.indexOf("Nome"), iP = cab.indexOf("Placa"), iC = cab.indexOf("Chassi"), iE = cab.findIndex(c => c === "E-mail" || c === "Email");
   if (iN === -1) return;
-  
   const cF = [], pF = [];
   for (let i = 1; i < d4.length; i++) {
-    const p = iP > -1 && d4[i][iP] ? String(d4[i][iP]).trim().toUpperCase() : "";
-    const c = iC > -1 && d4[i][iC] ? String(d4[i][iC]).trim().toUpperCase() : "";
-    const e = iE > -1 && d4[i][iE] ? String(d4[i][iE]).trim().toLowerCase() : "";
-    
+    const p = iP > -1 && d4[i][iP] ? String(d4[i][iP]).trim().toUpperCase() : "", c = iC > -1 && d4[i][iC] ? String(d4[i][iC]).trim().toUpperCase() : "", e = iE > -1 && d4[i][iE] ? String(d4[i][iE]).trim().toLowerCase() : "";
     let cr = "#000000", ps = "normal";
-    if ((p && sC.has(p)) || (c && sC.has(c))) {
-      cr = "#2E7D32"; ps = "bold";
-    } else if ((p && sI.has(p)) || (c && sI.has(c))) {
-      cr = "#9C27B0"; ps = "bold";
-    } else if (e && sE.has(e)) {
-      cr = "#FF0000"; ps = "bold";
-    }
-    cF.push([cr]);
-    pF.push([ps]);
+    if ((p && sC.has(p)) || (c && sC.has(c))) { cr = "#2E7D32"; ps = "bold"; } else if ((p && sI.has(p)) || (c && sI.has(c))) { cr = "#9C27B0"; ps = "bold"; } else if (e && sE.has(e)) { cr = "#FF0000"; ps = "bold"; }
+    cF.push([cr]); pF.push([ps]);
   }
-  
-  if (cF.length > 0) {
-    const rN = a4.getRange(2, iN + 1, cF.length, 1);
-    rN.setFontColors(cF);
-    rN.setFontWeights(pF);
-  }
+  if (cF.length > 0) { const rN = a4.getRange(2, iN + 1, cF.length, 1); rN.setFontColors(cF); rN.setFontWeights(pF); }
 }
 
 function web_obterDadosLogs(nomeDaAba) {
-  const ss = SpreadsheetApp.openById(PLANILHA_ID);
-  const aba = ss.getSheetByName(nomeDaAba);
+  const ss = SpreadsheetApp.openById(PLANILHA_ID); const aba = ss.getSheetByName(nomeDaAba);
   if (!aba) return { colunas: [], linhas: [] };
-  
   const dados = aba.getDataRange().getValues();
   if (dados.length < 2) return { colunas: [], linhas: [] };
-  
   if (nomeDaAba === "4 -Registro - NÃO ALTERAR") {
-    const aConc = ss.getSheetByName("Log Concluídos");
-    const aSit = ss.getSheetByName("6 -Situação");
-    const aErr = ss.getSheetByName("Erro");
+    const aConc = ss.getSheetByName("Log Concluídos"), aSit = ss.getSheetByName("6 -Situação"), aErr = ss.getSheetByName("Erro");
     const sC = new Set(), sI = new Set(), sE = new Set();
-    
-    if (aConc) {
-      const d = aConc.getDataRange().getValues();
-      for (let i = 1; i < d.length; i++) {
-        if (d[i][2]) sC.add(String(d[i][2]).trim().toUpperCase());
-        if (d[i][3]) sC.add(String(d[i][3]).trim().toUpperCase());
-      }
-    }
-    if (aSit) {
-      const d = aSit.getDataRange().getValues();
-      for (let i = 1; i < d.length; i++) {
-        const c = String(d[i][6]).trim();
-        if (c && c !== "1" && c !== "14") {
-          if (d[i][2]) sI.add(String(d[i][2]).trim().toUpperCase());
-          if (d[i][3]) sI.add(String(d[i][3]).trim().toUpperCase());
-        }
-      }
-    }
-    if (aErr) {
-      const d = aErr.getDataRange().getValues();
-      for (let i = 1; i < d.length; i++) {
-        const e = String(d[i][MAPA_COLUNAS.EMAIL]).trim().toLowerCase();
-        if (e) sE.add(e);
-      }
-    }
-    
-    const cab = dados[0].map(c => String(c).trim());
-    const iN = cab.indexOf("Nome"), iP = cab.indexOf("Placa"), iC = cab.indexOf("Chassi"), iE = cab.findIndex(c => c === "E-mail" || c === "Email");
-    const colunas = ["Status Principal", "Cliente", "Identificação", "Envios Processados", "Responsável pelo Envio"];
-    const linhasMatriz = [];
+    if (aConc) { const d = aConc.getDataRange().getValues();
+    for (let i = 1; i < d.length; i++) { if (d[i][2]) sC.add(String(d[i][2]).trim().toUpperCase()); if (d[i][3]) sC.add(String(d[i][3]).trim().toUpperCase()); } }
+    if (aSit) { const d = aSit.getDataRange().getValues();
+    for (let i = 1; i < d.length; i++) { const c = String(d[i][6]).trim();
+    if (c && c !== "1" && c !== "14") { if (d[i][2]) sI.add(String(d[i][2]).trim().toUpperCase()); if (d[i][3]) sI.add(String(d[i][3]).trim().toUpperCase()); } } }
+    if (aErr) { const d = aErr.getDataRange().getValues();
+    for (let i = 1; i < d.length; i++) { const e = String(d[i][MAPA_COLUNAS.EMAIL]).trim().toLowerCase(); if (e) sE.add(e); } }
+    const cab = dados[0].map(c => String(c).trim()), iN = cab.indexOf("Nome"), iP = cab.indexOf("Placa"), iC = cab.indexOf("Chassi"), iE = cab.findIndex(c => c === "E-mail" || c === "Email");
+    const colunas = ["Status Principal", "Cliente", "Identificação", "Envios Processados", "Responsável pelo Envio"], linhasMatriz = [];
     let inicio = dados.length > 1001 ? dados.length - 1000 : 1;
-    
     for (let i = dados.length - 1; i >= inicio; i--) {
-      const p = iP > -1 && dados[i][iP] ? String(dados[i][iP]).trim().toUpperCase() : "";
-      const c = iC > -1 && dados[i][iC] ? String(dados[i][iC]).trim().toUpperCase() : "";
-      const e = iE > -1 && dados[i][iE] ? String(dados[i][iE]).trim().toLowerCase() : "";
-      const nome = iN > -1 ? dados[i][iN] : "";
-      const ident = (p || "---") + " / " + (c || "---");
-      
-      let envios = [];
-      let resps = new Set();
-      let highestStage = 0;
-      
-      const mapEtapas = [
-        { emj: "🔰", chkE: "1- E-mail (boas vindas)", datE: "1- Enviado e-mail em:", chkW: "1-Whatsapp (boas vindas)", datW: "1 -Enviado whats em:", resp: "1-Responsável (boas vindas)" },
-        { emj: "⚠️", chkE: "2- E-mail (5 dias)", datE: "2- Enviado e-mail em:", chkW: "2-Whatsapp (5 dias)", datW: "2 -Enviado whats em:", resp: "2-Responsável (5 dias)" },
-        { emj: "⛔", chkE: "3- E-mail (prazo)", datE: "3- Enviado e-mail em:", chkW: "3-Whatsapp (prazo)", datW: "3 -Enviado whats em:", resp: "3-Responsável (prazo)" }
-      ];
-      
+      const p = iP > -1 && dados[i][iP] ? String(dados[i][iP]).trim().toUpperCase() : "", c = iC > -1 && dados[i][iC] ? String(dados[i][iC]).trim().toUpperCase() : "", e = iE > -1 && dados[i][iE] ? String(dados[i][iE]).trim().toLowerCase() : "", nome = iN > -1 ? dados[i][iN] : "", ident = (p || "---") + " / " + (c || "---");
+      let envios = [], resps = new Set(), highestStage = 0;
+      const mapEtapas = [ { emj: "🔰", chkE: "1- E-mail (boas vindas)", datE: "1- Enviado e-mail em:", chkW: "1-Whatsapp (boas vindas)", datW: "1 -Enviado whats em:", resp: "1-Responsável (boas vindas)" }, { emj: "⚠️", chkE: "2- E-mail (5 dias)", datE: "2- Enviado e-mail em:", chkW: "2-Whatsapp (5 dias)", datW: "2 -Enviado whats em:", resp: "2-Responsável (5 dias)" }, { emj: "⛔", chkE: "3- E-mail (prazo)", datE: "3- Enviado e-mail em:", chkW: "3-Whatsapp (prazo)", datW: "3 -Enviado whats em:", resp: "3-Responsável (prazo)" } ];
       mapEtapas.forEach((etp, index) => {
-        let idxCE = cab.indexOf(etp.chkE), idxDE = cab.indexOf(etp.datE), idxR = cab.indexOf(etp.resp);
-        let idxCW = cab.indexOf(etp.chkW), idxDW = cab.indexOf(etp.datW);
-        
-        let dE = idxDE > -1 && dados[i][idxDE] ? web_formatarDataSegura(dados[i][idxDE]).split(" ")[0] : "";
-        let dW = idxDW > -1 && dados[i][idxDW] ? web_formatarDataSegura(dados[i][idxDW]).split(" ")[0] : "";
-        let responsavel = idxR > -1 && dados[i][idxR] ? String(dados[i][idxR]).trim() : "";
+        let idxCE = cab.indexOf(etp.chkE), idxDE = cab.indexOf(etp.datE), idxR = cab.indexOf(etp.resp), idxCW = cab.indexOf(etp.chkW), idxDW = cab.indexOf(etp.datW);
+        let dE = idxDE > -1 && dados[i][idxDE] ? web_formatarDataSegura(dados[i][idxDE]).split(" ")[0] : "", dW = idxDW > -1 && dados[i][idxDW] ? web_formatarDataSegura(dados[i][idxDW]).split(" ")[0] : "", responsavel = idxR > -1 && dados[i][idxR] ? String(dados[i][idxR]).trim() : "";
         let hasEnvio = false;
-        
-        if ((idxCE > -1 && dados[i][idxCE] === true) || dE) {
-          envios.push(`<div class="mb-1.5 text-[12px] flex items-center gap-1.5"><span class="text-base">${etp.emj}</span> <span class="text-indigo-600 dark:text-indigo-400 font-bold bg-indigo-50 dark:bg-indigo-900/30 px-1.5 py-0.5 rounded border border-indigo-100 dark:border-indigo-800/50">E-mail</span> <span class="text-slate-500">${dE || '✔️'}</span></div>`);
-          if (responsavel && responsavel !== "Sistema") resps.add(`<div class="mb-1.5 text-[12px] flex items-center gap-1.5"><span class="text-base">${etp.emj}</span> <span class="font-black text-slate-700 dark:text-slate-300">${responsavel}</span></div>`);
-          hasEnvio = true;
-        }
-        
-        if ((idxCW > -1 && dados[i][idxCW] === true) || dW) {
-          envios.push(`<div class="mb-1.5 text-[12px] flex items-center gap-1.5"><span class="text-base">${etp.emj}</span> <span class="text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded border border-emerald-100 dark:border-emerald-800/50">Whats</span> <span class="text-slate-500">${dW || '✔️'}</span></div>`);
-          if (responsavel && responsavel !== "Sistema") resps.add(`<div class="mb-1.5 text-[12px] flex items-center gap-1.5"><span class="text-base">${etp.emj}</span> <span class="font-black text-slate-700 dark:text-slate-300">${responsavel}</span></div>`);
-          hasEnvio = true;
-        }
-        
+        if ((idxCE > -1 && dados[i][idxCE] === true) || dE) { envios.push(`<div class="mb-1.5 text-[12px] flex items-center gap-1.5"><span class="text-base">${etp.emj}</span> <span class="text-indigo-600 dark:text-indigo-400 font-bold bg-indigo-50 dark:bg-indigo-900/30 px-1.5 py-0.5 rounded border border-indigo-100 dark:border-indigo-800/50">E-mail</span> <span class="text-slate-500">${dE || '✔️'}</span></div>`); if (responsavel && responsavel !== "Sistema") resps.add(`<div class="mb-1.5 text-[12px] flex items-center gap-1.5"><span class="text-base">${etp.emj}</span> <span class="font-black text-slate-700 dark:text-slate-300">${responsavel}</span></div>`); hasEnvio = true; }
+        if ((idxCW > -1 && dados[i][idxCW] === true) || dW) { envios.push(`<div class="mb-1.5 text-[12px] flex items-center gap-1.5"><span class="text-base">${etp.emj}</span> <span class="text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded border border-emerald-100 dark:border-emerald-800/50">Whats</span> <span class="text-slate-500">${dW || '✔️'}</span></div>`);
+        if (responsavel && responsavel !== "Sistema") resps.add(`<div class="mb-1.5 text-[12px] flex items-center gap-1.5"><span class="text-base">${etp.emj}</span> <span class="font-black text-slate-700 dark:text-slate-300">${responsavel}</span></div>`); hasEnvio = true; }
         if (hasEnvio) highestStage = index + 1;
       });
-      
       let status = `<span class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2.5 py-1 rounded-md text-[10px] font-black border border-slate-200 dark:border-slate-700 tracking-wider shadow-sm">⏳ PENDENTE</span>`;
       if (highestStage === 1) status = `<span class="bg-indigo-100 dark:bg-indigo-900/40 text-indigo-800 dark:text-indigo-400 px-2.5 py-1 rounded-md text-[10px] font-black border border-indigo-300 dark:border-indigo-800/50 tracking-wider shadow-sm">🔰 BOAS VINDAS</span>`;
       else if (highestStage === 2) status = `<span class="bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-400 px-2.5 py-1 rounded-md text-[10px] font-black border border-amber-300 dark:border-amber-800/50 tracking-wider shadow-sm">⚠️ ALERTA 5D</span>`;
       else if (highestStage === 3) status = `<span class="bg-rose-100 dark:bg-rose-900/40 text-rose-800 dark:text-rose-400 px-2.5 py-1 rounded-md text-[10px] font-black border border-rose-300 dark:border-rose-800/50 tracking-wider shadow-sm">⛔ PRAZO EXP</span>`;
-      
       if ((p && sC.has(p)) || (c && sC.has(c))) status = `<span class="bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-400 px-2.5 py-1 rounded-md text-[10px] font-black border border-emerald-300 dark:border-emerald-800/50 tracking-wider shadow-sm">✅ CONCLUÍDO</span>`;
       else if ((p && sI.has(p)) || (c && sI.has(c))) status = `<span class="bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-400 px-2.5 py-1 rounded-md text-[10px] font-black border border-purple-300 dark:border-purple-800/50 tracking-wider shadow-sm">🟣 INATIVO</span>`;
       else if (e && sE.has(e)) status = `<span class="bg-rose-100 dark:bg-rose-900/40 text-rose-800 dark:text-rose-400 px-2.5 py-1 rounded-md text-[10px] font-black border border-rose-300 dark:border-rose-800/50 tracking-wider shadow-sm">❌ ERRO</span>`;
-
-      linhasMatriz.push([
-        status,
-        `<div class="font-black text-slate-800 dark:text-white text-sm mb-1">${nome}</div><div class="text-[11px] text-slate-500 font-medium">${e}</div>`,
-        `<div class="font-mono text-slate-600 dark:text-slate-400 font-bold bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded w-max border border-slate-200 dark:border-slate-700">${ident}</div>`,
-        envios.length > 0 ? envios.join("") : `<span class="text-slate-400 dark:text-slate-500 italic text-xs">Aguardando operação...</span>`,
-        resps.size > 0 ? Array.from(resps).join("") : `<span class="text-slate-400 dark:text-slate-500">-</span>`
-      ]);
+      linhasMatriz.push([ status, `<div class="font-black text-slate-800 dark:text-white text-sm mb-1">${nome}</div><div class="text-[11px] text-slate-500 font-medium">${e}</div>`, `<div class="font-mono text-slate-600 dark:text-slate-400 font-bold bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded w-max border border-slate-200 dark:border-slate-700">${ident}</div>`, envios.length > 0 ? envios.join("") : `<span class="text-slate-400 dark:text-slate-500 italic text-xs">Aguardando operação...</span>`, resps.size > 0 ? Array.from(resps).join("") : `<span class="text-slate-400 dark:text-slate-500">-</span>` ]);
     }
     return JSON.parse(JSON.stringify({ colunas, linhas: linhasMatriz, isHtml: true }));
   }
-  
-  const cabecalho = dados[0].map(c => String(c));
-  const idxRegistroUnico = cabecalho.indexOf("Registro único");
-  if (idxRegistroUnico > -1) cabecalho.splice(idxRegistroUnico, 1);
-  
-  const linhasMatriz = [];
-  let inicio = dados.length > 1001 ? dados.length - 1000 : 1;
-  
-  for (let i = dados.length - 1; i >= inicio; i--) {
-    let row = dados[i];
-    if (idxRegistroUnico > -1) {
-      row = [...row];
-      row.splice(idxRegistroUnico, 1);
-    }
-    linhasMatriz.push(row.map(val => web_converterBooleano(val)));
-  }
+  const cabecalho = dados[0].map(c => String(c)), idxRegistroUnico = cabecalho.indexOf("Registro único"); if (idxRegistroUnico > -1) cabecalho.splice(idxRegistroUnico, 1);
+  const linhasMatriz = []; let inicio = dados.length > 1001 ? dados.length - 1000 : 1;
+  for (let i = dados.length - 1; i >= inicio; i--) { let row = dados[i];
+  if (idxRegistroUnico > -1) { row = [...row]; row.splice(idxRegistroUnico, 1); } linhasMatriz.push(row.map(val => web_converterBooleano(val))); }
   return JSON.parse(JSON.stringify({ colunas: cabecalho, linhas: linhasMatriz, isHtml: false }));
 }
 
 // ====================================================================================
-// GESTÃO DE TÉCNICOS (CRUD PLANILHA TÉCNICOS)
+// GESTÃO DE TÉCNICOS (CRUD PLANILHA TÉCNICOS - AS 8 COLUNAS)
 // ====================================================================================
 function web_obterTecnicos() {
   try {
@@ -1312,33 +1065,42 @@ function web_obterTecnicos() {
     const aba = ss.getSheets()[0];
     const dados = aba.getDataRange().getValues();
     const tecnicos = [];
-    
-    // Assume-se que a linha 0 é cabeçalho
+    // Mapeamento EXATO: Nome(0), Endereço(1), Número(2), Bairro(3), Cidade(4), Estado(5), CEP(6), Telefone(7)
     for (let i = 1; i < dados.length; i++) {
-      if (dados[i][0] || dados[i][1]) {
+      if (dados[i][0]) {
         tecnicos.push({
           linha: i + 1,
           nome: String(dados[i][0] || "").trim(),
           endereco: String(dados[i][1] || "").trim(),
-          telefone: String(dados[i][2] || "").trim()
+          numero: String(dados[i][2] || "").trim(),
+          bairro: String(dados[i][3] || "").trim(),
+          cidade: String(dados[i][4] || "").trim(),
+          estado: String(dados[i][5] || "").trim(),
+          cep: String(dados[i][6] || "").trim(),
+          telefone: String(dados[i][7] || "").trim()
         });
       }
     }
     return tecnicos;
-  } catch (e) {
-    return { erro: "Erro ao ler a planilha de técnicos. Verifique o ID e permissões: " + e.message };
-  }
+  } catch (e) { return { erro: "Erro ao ler a planilha de técnicos. Verifique o ID e permissões: " + e.message }; }
 }
 
-function web_adicionarTecnico(nome, endereco, telefone) {
+function web_adicionarTecnico(dadosObj) {
   try {
     const ss = SpreadsheetApp.openById(ID_PLANILHA_TECNICOS);
     const aba = ss.getSheets()[0];
-    aba.appendRow([nome, endereco, telefone]);
+    aba.appendRow([ dadosObj.nome, dadosObj.endereco, dadosObj.numero, dadosObj.bairro, dadosObj.cidade, dadosObj.estado, dadosObj.cep, dadosObj.telefone ]);
     return "✅ Técnico cadastrado com sucesso!";
-  } catch (e) {
-    return "❌ Erro ao salvar técnico: " + e.message;
-  }
+  } catch (e) { return "❌ Erro ao salvar técnico: " + e.message; }
+}
+
+function web_atualizarTecnico(linha, dadosObj) {
+  try {
+    const ss = SpreadsheetApp.openById(ID_PLANILHA_TECNICOS);
+    const aba = ss.getSheets()[0];
+    aba.getRange(linha, 1, 1, 8).setValues([[ dadosObj.nome, dadosObj.endereco, dadosObj.numero, dadosObj.bairro, dadosObj.cidade, dadosObj.estado, dadosObj.cep, dadosObj.telefone ]]);
+    return "✅ Dados do técnico atualizados com sucesso!";
+  } catch (e) { return "❌ Erro ao atualizar técnico: " + e.message; }
 }
 
 function web_removerTecnico(linha) {
@@ -1347,7 +1109,48 @@ function web_removerTecnico(linha) {
     const aba = ss.getSheets()[0];
     aba.deleteRow(linha);
     return "✅ Técnico removido com sucesso!";
+  } catch (e) { return "❌ Erro ao remover técnico: " + e.message; }
+}
+// ====================================================================================
+// HEALTH CHECK (TESTE DE APIS)
+// ====================================================================================
+function web_testarAPIs() {
+  const status = { hinova: false, tempo: 0, erro: null };
+  const inicio = new Date().getTime();
+  
+  try {
+    const options = {
+      "method": "post",
+      "headers": { 
+        "Authorization": "Bearer " + SGA_CONFIG.TOKEN_ASSOCIACAO, 
+        "Content-Type": "application/json" 
+      },
+      "payload": JSON.stringify({ 
+        "usuario": SGA_CONFIG.USUARIO, 
+        "senha": SGA_CONFIG.SENHA 
+      }),
+      "muteHttpExceptions": true
+    };
+    
+    // Dispara a requisição contra a Hinova
+    const resp = UrlFetchApp.fetch(SGA_CONFIG.URL_AUTH, options);
+    
+    // Calcula o tempo de resposta (Ping)
+    status.tempo = new Date().getTime() - inicio; 
+    
+    if (resp.getResponseCode() === 200) {
+      const json = JSON.parse(resp.getContentText());
+      if (json.token_usuario) {
+        status.hinova = true;
+      } else {
+        status.erro = "A API Hinova respondeu, mas o token de autenticação veio vazio.";
+      }
+    } else {
+      status.erro = `Falha de Comunicação (HTTP ${resp.getResponseCode()})`;
+    }
   } catch (e) {
-    return "❌ Erro ao remover técnico: " + e.message;
+    status.erro = "Erro interno do servidor Google: " + e.message;
   }
+  
+  return status;
 }
