@@ -88,6 +88,50 @@
     </div>
   </div>
 
+  <div id="modal-edicao-cliente" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[300] hidden flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-darkcard rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col overflow-hidden animate-[fadeIn_0.2s_ease-out]">
+      <div class="p-5 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-indigo-600">
+        <h2 class="text-lg font-black text-white" id="titulo-modal-edicao">✏️ Editar Dados do Cliente</h2>
+        <button onclick="fecharModalEdicaoCliente()" class="text-indigo-200 hover:text-white transition text-xl">✖</button>
+      </div>
+      <div class="p-6 flex flex-col gap-4 overflow-y-auto max-h-[75vh]">
+        <input type="hidden" id="ipt-edit-idUnico">
+        <div>
+          <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Nome Completo</label>
+          <input type="text" id="ipt-edit-nome" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded p-2.5 text-sm dark:text-white outline-none focus:border-indigo-500">
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Placa</label>
+            <input type="text" id="ipt-edit-placa" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded p-2.5 text-sm dark:text-white outline-none focus:border-indigo-500 uppercase">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Chassi</label>
+            <input type="text" id="ipt-edit-chassi" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded p-2.5 text-sm dark:text-white outline-none focus:border-indigo-500 uppercase">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">E-mail</label>
+            <input type="email" id="ipt-edit-email" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded p-2.5 text-sm dark:text-white outline-none focus:border-indigo-500 lowercase">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Telefone (WhatsApp)</label>
+            <input type="text" id="ipt-edit-telefone" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded p-2.5 text-sm dark:text-white outline-none focus:border-indigo-500">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Valor FIPE (Opcional)</label>
+          <input type="text" id="ipt-edit-fipe" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded p-2.5 text-sm dark:text-white outline-none focus:border-indigo-500">
+        </div>
+      </div>
+      <div class="p-5 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 flex justify-end gap-3">
+        <button onclick="fecharModalEdicaoCliente()" class="px-5 py-2.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition">Cancelar</button>
+        <button onclick="salvarEdicaoCliente()" id="btn-salvar-edicao-cli" class="px-6 py-2.5 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700 transition shadow-md flex items-center gap-2">💾 Salvar Alterações</button>
+      </div>
+    </div>
+  </div>
+
   <div id="modal-tecnico" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[300] hidden flex items-center justify-center p-4">
     <div class="bg-white dark:bg-darkcard rounded-2xl shadow-2xl w-full max-w-4xl flex flex-col overflow-hidden animate-[fadeIn_0.2s_ease-out]">
       <div class="p-5 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-indigo-600">
@@ -586,6 +630,62 @@
     
     function criarToggle(campo, idUnico, chk, cor) { return `<div class="relative inline-block w-10 align-middle transition print:hidden"><input type="checkbox" onchange="salvarMarcacao('${idUnico}', '${campo}', this.checked)" ${chk ? "checked" : ""} class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-2 cursor-pointer"/><label class="toggle-label block h-5 rounded-full ${chk ? cor : 'bg-slate-300'} cursor-pointer"></label></div><span class="hidden print:inline-block font-bold">${chk ? 'SIM' : 'NÃO'}</span>`; }
 
+    // ====================================================================================
+    // LÓGICA DE EDIÇÃO DO CLIENTE NA FILA (NOVO)
+    // ====================================================================================
+    function abrirModalEdicaoCliente(idUnico) {
+      const cli = cacheFilaBase.find(c => c.idUnico === idUnico);
+      if(!cli) return aviso("⚠️ Cliente não encontrado na base de dados.");
+      
+      document.getElementById('ipt-edit-idUnico').value = idUnico;
+      document.getElementById('ipt-edit-nome').value = cli.nome || "";
+      document.getElementById('ipt-edit-placa').value = cli.placa || "";
+      document.getElementById('ipt-edit-chassi').value = cli.chassi || "";
+      document.getElementById('ipt-edit-email').value = cli.email || "";
+      document.getElementById('ipt-edit-telefone').value = cli.telefone || "";
+      document.getElementById('ipt-edit-fipe').value = cli.fipe || "";
+      
+      document.getElementById('modal-edicao-cliente').classList.remove('hidden');
+    }
+
+    function fecharModalEdicaoCliente() {
+      document.getElementById('modal-edicao-cliente').classList.add('hidden');
+    }
+
+    function salvarEdicaoCliente() {
+      const idUnico = document.getElementById('ipt-edit-idUnico').value;
+      const cli = cacheFilaBase.find(c => c.idUnico === idUnico);
+      if(!cli) return;
+
+      const payload = {
+        nome: document.getElementById('ipt-edit-nome').value.trim(),
+        placa: document.getElementById('ipt-edit-placa').value.trim(),
+        chassi: document.getElementById('ipt-edit-chassi').value.trim(),
+        email: document.getElementById('ipt-edit-email').value.trim(),
+        telefone: document.getElementById('ipt-edit-telefone').value.trim(),
+        fipe: document.getElementById('ipt-edit-fipe').value.trim()
+      };
+
+      const btn = document.getElementById('btn-salvar-edicao-cli');
+      btn.innerHTML = "⏳ Salvando...";
+      btn.disabled = true;
+
+      google.script.run
+        .withSuccessHandler(res => {
+           aviso(res, 5000);
+           btn.innerHTML = "💾 Salvar Alterações";
+           btn.disabled = false;
+           fecharModalEdicaoCliente();
+           carregarFilaGeral(); // Recarrega a fila para atualizar a tela
+        })
+        .withFailureHandler(err => {
+           aviso("❌ Erro: " + err.message);
+           btn.innerHTML = "💾 Salvar Alterações";
+           btn.disabled = false;
+        })
+        .web_atualizarDadosCliente(cli.abaNome, cli.linhaOriginal, payload);
+    }
+
     function desenharTabelaFila() {
       const chkMaster = document.getElementById('chk-master');
       if (chkMaster) chkMaster.checked = false;
@@ -642,7 +742,6 @@
             </div>
           `;
           
-          // Lógica Limpa da Logística: Oculta o card e usa Tooltip!
           let htmlLogistica = `<span class="text-slate-400 dark:text-slate-500 italic text-[10px]">Sem rota definida</span>`;
           if (cli.tecnicoDisp) {
             let tipoDisplay = String(cli.tecnicoTipo || "Volante");
@@ -665,7 +764,13 @@
             <tr class="${rowCls} border-b border-slate-100 dark:border-slate-800/60">
               <td class="py-2 px-3 text-center border-r border-slate-100 dark:border-slate-700/30 print:hidden"><input type="checkbox" data-id="${cli.idUnico}" onchange="updateSelection(this)" class="chk-cli w-4 h-4 rounded text-indigo-600 dark:bg-slate-700 dark:border-slate-600 cursor-pointer focus:ring-indigo-500" ${cli.isEnviado ? "disabled" : ""} ${isChecked}></td>
               <td class="py-2 px-3 text-center border-r border-slate-100 dark:border-slate-700/30 align-middle">${badgeEtapa}</td>
-              <td class="py-2 px-4 font-bold ${corNomeClass} whitespace-nowrap" title="${cli.notaNome}">${cli.nome || "-"} <br> <span class="mt-1 block">${alertaBadge}</span></td>
+              <td class="py-2 px-4 font-bold ${corNomeClass} whitespace-nowrap" title="${cli.notaNome}">
+                 <div class="flex items-center gap-2">
+                    <span class="truncate max-w-[200px]">${cli.nome || "-"}</span>
+                    <button onclick="abrirModalEdicaoCliente('${cli.idUnico}')" class="text-[10px] bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 px-1.5 py-0.5 rounded shadow-sm transition print:hidden" title="Editar Dados Cadastrais">✏️</button>
+                 </div>
+                 <span class="mt-1 block">${alertaBadge}</span>
+              </td>
               <td class="py-2 px-4 font-mono font-medium text-slate-600 dark:text-slate-300 whitespace-nowrap">${veiculoDisplay}<br><span class="text-xs ${fipeBadgeClass} border px-2.5 py-1 rounded-md font-black mt-1.5 block w-max shadow-sm tracking-wide print:border-none print:p-0 print:bg-transparent print:mt-0">${fipeDisplay}</span></td>
               <td class="py-2 px-4 whitespace-nowrap text-[12px]"><span class="text-slate-500 font-bold" title="Data de Entrada">📥 ${cli.dataPlanilha || '-'}</span><br><span class="mt-1 block" title="Momento em que o e-mail foi disparado">${dataEnvioFormato}</span></td>
               <td class="py-2 px-4 whitespace-nowrap text-xs">${formEmail}<br>${gerarLinkWhats(cli.telefone, cli.mensagemWhatsApp)}</td>
@@ -688,15 +793,6 @@
     function getAlvosSelecionados() { return cacheFilaBase.filter(c => selectionSet.has(c.idUnico)); }
     function limparSelecaoAposAcao() { selectionSet.clear(); contarChecksGlobais(); }
     
-    function salvarMarcacao(idUnico, campo, bool) { 
-      const cli = cacheFilaBase.find(c => c.idUnico === idUnico); if(!cli) return; 
-      if(campo === 'tecnicoIndisp') cli.isTecnicoIndisp = bool;
-      if(campo === 'fipeBaixa') cli.isFipeBaixa = bool;
-      if(campo === 'respEmail') cli.isRespondeuEmail = bool;
-      if(campo === 'respWhats') cli.isRespondeuWhats = bool;
-      google.script.run.withSuccessHandler(res => { aviso(res, 3000); aplicarFiltrosEOrdenacao(); }).withFailureHandler(e => aviso("Erro: " + e.message)).atualizarMarcacaoWeb(cli.abaNome, cli.linhaOriginal, campo, bool); 
-    }
-
     function fecharModalPreview() { document.getElementById('modal-preview-emails').classList.add('hidden'); }
     function mostrarErroCritico(msg) { document.getElementById('texto-erro-critico').value = msg; document.getElementById('modal-erro-critico').classList.remove('hidden'); }
     function copiarErroCritico() { document.getElementById('texto-erro-critico').select(); document.execCommand('copy'); aviso("📋 Código copiado!", 3000); }
