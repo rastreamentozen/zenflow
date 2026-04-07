@@ -7,45 +7,25 @@ const ID_PLANILHA_TECNICOS = "1yrYwyE0iy4aYKHEthMxPF3rOUiygfQkSLqXBzIGtK4I";
 const EMAIL_REMETENTE = "rastreamento@zenseguro.com";
 
 const MAPA_COLUNAS = {
-  DATA: 1, // Coluna B
-  NOME: 2, // Coluna C
-  PLACA: 3, // Coluna D
-  CHASSI: 4, 
-  FIPE: 5, 
-  EMAIL: 6, 
-  TELEFONE: 7,
-  CHECK_EMAIL: 8, 
-  DATA_EMAIL: 9, 
-  RESPONDEU_EMAIL: 10,
-  CHECK_WHATS: 11, 
-  DATA_WHATS: 12, 
-  RESPONDEU_WHATS: 13,
-  RESPONSAVEL: 14, 
-  FIPE_BAIXA: 15, 
-  TECNICO_INDISPONIVEL: 16, 
-  ESTADO: 17
+  DATA: 1, NOME: 2, PLACA: 3, CHASSI: 4, FIPE: 5, EMAIL: 6, TELEFONE: 7,
+  CHECK_EMAIL: 8, DATA_EMAIL: 9, RESPONDEU_EMAIL: 10, CHECK_WHATS: 11, 
+  DATA_WHATS: 12, RESPONDEU_WHATS: 13, RESPONSAVEL: 14, FIPE_BAIXA: 15, 
+  TECNICO_INDISPONIVEL: 16, ESTADO: 17
 };
 
 const SGA_CONFIG = {
   URL_AUTH: "https://api.hinova.com.br/api/sga/v2/usuario/autenticar",
   URL_CONSULTA_BASE: "https://api.hinova.com.br/api/sga/v2/veiculo/buscar/",
-  TOKEN_ASSOCIACAO: "05f0d78c7ffd9520a95abfe8fbe9811806cea1a7a49163bbfff11677e2972a7fb907796f00e7c7828843aa17f32789757f37c27247ccc4c6bbf9b3759a98ed1825a9840759dce17b0ada14f497eca1374ccb921ec48e2c6e2d0a45c62b12b26a",
-  USUARIO: "victor rodrigues",
-  SENHA: "ZEN0102"
+  TOKEN_ASSOCIACAO: "041e6d561c08d16fce2a5beead2ca02fa4f4ee113d51a6f56e9c9e7c89694e4187b271c6cf997f4ece7bf4180e13ee750cb67ffbaa15d5bc82260c3b57a27cfc114322ab6e29a6dc368f1c2b4ea59702456d6c9df528c97f3386aee5978276f6",
+  USUARIO: "victor rodrigues", SENHA: "ZEN0102"
 };
 
 const MAPA_SITUACAO_SGA = { "1": "Ativo", "2": "Inativo", "3": "Pendente", "4": "Inadimplente", "5": "Negado", "6": "Cancelado", "7": "Evento", "8": "Indenizado", "11": "Cancelado com rastreador", "12": "Inativos com rastreador", "13": "Inativos sem rastreador", "14": "Ativo com adesivo", "17": "Cancelamento pendente", "18": "Envio de termos", "19": "Desligado do corpo associativo", "22": "Aguardando indenização" };
 
 function Z_AUTORIZAR_SCRIPT() {
   const usuario = Session.getEffectiveUser().getEmail();
-  MailApp.sendEmail({
-    to: usuario,
-    subject: "SGCW - Autorização de BI e Slides",
-    body: "Permissões de E-mail concedidas!"
-  });
-  try {
-    SlidesApp.create("SGCW_Auth").setTrashed(true);
-  } catch (e) { }
+  MailApp.sendEmail({ to: usuario, subject: "SGCW - Autorização de BI e Slides", body: "Permissões de E-mail concedidas!" });
+  try { SlidesApp.create("SGCW_Auth").setTrashed(true); } catch (e) { }
   console.log("✅ Permissões de envio de E-mail e Google Slides concedidas com sucesso.");
 }
 
@@ -53,10 +33,7 @@ function doGet(e) {
   const t = HtmlService.createTemplateFromFile('Index');
   t.urlApp = ScriptApp.getService().getUrl();
   t.viewParam = e.parameter.view || '';
-  return t.evaluate()
-    .setTitle('SGCW - Portal Operacional')
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
-    .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+  return t.evaluate().setTitle('SGCW - Portal Operacional').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL).addMetaTag('viewport', 'width=device-width, initial-scale=1');
 }
 
 function solicitarDadosWeb(tela, parametro) {
@@ -66,22 +43,13 @@ function solicitarDadosWeb(tela, parametro) {
     if (tela === 'logs') return web_obterDadosLogs(parametro);
     if (tela === 'config') return web_obterConfiguracoes();
     if (tela === 'tecnicos') return web_obterTecnicos();
-    if (tela === 'statusAPI') return web_testarAPIs(); // <--- Rota adicionada!
+    if (tela === 'statusAPI') return web_testarAPIs(); 
     return null;
-  } catch (erro) {
-    return { erro: "Erro Backend: " + erro.message };
-  }
+  } catch (erro) { return { erro: "Erro Backend: " + erro.message }; }
 }
 
-function web_formatarDataSegura(v) {
-  return (v && v instanceof Date) ? Utilities.formatDate(v, Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm") : String(v || "").trim();
-}
-
-function web_converterBooleano(v) {
-  return (v === true || v === "TRUE" || v === 1) ?
-    "✔️" : (v === false || v === "FALSE" || v === 0) ? "❌" : String(v || "");
-}
-
+function web_formatarDataSegura(v) { return (v && v instanceof Date) ? Utilities.formatDate(v, Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm") : String(v || "").trim(); }
+function web_converterBooleano(v) { return (v === true || v === "TRUE" || v === 1) ? "✔️" : (v === false || v === "FALSE" || v === 0) ? "❌" : String(v || ""); }
 function web_extrairDataParaCalculo(valor) {
   if (!valor) return null;
   if (valor instanceof Date) return new Date(valor.getTime());
@@ -115,17 +83,14 @@ function web_obterDadosDashboard() {
 
   const stats = {
     kpis: {
-      pendentesTotal: 0,
-      pendentesEtapa: { '1': 0, '2': 0, '3': 0 },
-      conclusaoTotal: 0,
-      conclusaoEtapa: { '1': 0, '2': 0, '3': 0 },
+      pendentesTotal: 0, pendentesEtapa: { '1': 0, '2': 0, '3': 0 },
+      conclusaoTotal: 0, conclusaoEtapa: { '1': 0, '2': 0, '3': 0 },
       emails: { hoje: 0, semana: 0, mes: 0, total: 0, etapa: { '1': 0, '2': 0, '3': 0 } },
       whats: { hoje: 0, semana: 0, mes: 0, total: 0, etapa: { '1': 0, '2': 0, '3': 0 } }
     },
     graficos: { historicoMensal: {}, equipeMes: {} }
   };
 
-  // 1. LER PENDENTES
   ["1 -", "2 -", "3 -"].forEach(nomeFrag => {
     const aba = ss.getSheets().find(s => s.getName().includes(nomeFrag));
     if (aba) {
@@ -135,15 +100,11 @@ function web_obterDadosDashboard() {
         if (!d[i][MAPA_COLUNAS.PLACA] && !d[i][MAPA_COLUNAS.CHASSI]) continue;
         const eE = d[i][MAPA_COLUNAS.CHECK_EMAIL] === true || d[i][MAPA_COLUNAS.CHECK_EMAIL] === "TRUE" || d[i][MAPA_COLUNAS.CHECK_EMAIL] === 1;
         const eW = d[i][MAPA_COLUNAS.CHECK_WHATS] === true || d[i][MAPA_COLUNAS.CHECK_WHATS] === "TRUE" || d[i][MAPA_COLUNAS.CHECK_WHATS] === 1;
-        if (!eE && !eW) {
-          stats.kpis.pendentesTotal++;
-          stats.kpis.pendentesEtapa[etapaStr]++;
-        }
+        if (!eE && !eW) { stats.kpis.pendentesTotal++; stats.kpis.pendentesEtapa[etapaStr]++; }
       }
     }
   });
 
-  // 2. LER ENVIOS E HISTÓRICO
   const aud = ss.getSheetByName("4 -Registro - NÃO ALTERAR");
   if (aud) {
     const dAud = aud.getDataRange().getValues();
@@ -165,7 +126,6 @@ function web_obterDadosDashboard() {
             if (dataCalc) {
               stats.kpis[m.canal].total++;
               stats.kpis[m.canal].etapa[m.etapa]++;
-              
               const diffDias = Math.floor((hoje.getTime() - dataCalc.getTime()) / 86400000);
               if (diffDias === 0) stats.kpis[m.canal].hoje++;
               if (diffDias >= 0 && diffDias <= 7) stats.kpis[m.canal].semana++;
@@ -193,7 +153,6 @@ function web_obterDadosDashboard() {
     }
   }
 
-  // 3. LER CONCLUSÕES
   const conc = ss.getSheetByName("Log Concluídos");
   if (conc) {
     const dConc = conc.getDataRange().getValues();
@@ -205,7 +164,6 @@ function web_obterDadosDashboard() {
       else if (abaOrigem.includes("3 -")) stats.kpis.conclusaoEtapa['3']++;
     }
   }
-
   return JSON.parse(JSON.stringify(stats));
 }
 
@@ -217,45 +175,35 @@ function exportarDashboardParaSlidesWeb(graficos, statsObj) {
     const timestamp = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm");
     const presentation = SlidesApp.create("Relatório Executivo SGCW - " + timestamp);
     const slideTitulo = presentation.getSlides()[0];
-    
-    slideTitulo.insertTextBox("Relatório Executivo - BI\nSGCW OPERACIONAL", 50, 150, 600, 100)
-      .getText().getTextStyle().setFontSize(32).setBold(true).setForegroundColor("#4f46e5");
-      
-    slideTitulo.insertTextBox("Gerado automaticamente em: " + timestamp, 50, 260, 600, 40)
-      .getText().getTextStyle().setFontSize(14).setForegroundColor("#64748b");
-      
+
+    slideTitulo.insertTextBox("Relatório Executivo - BI\nSGCW OPERACIONAL", 50, 150, 600, 100).getText().getTextStyle().setFontSize(32).setBold(true).setForegroundColor("#4f46e5");
+    slideTitulo.insertTextBox("Gerado automaticamente em: " + timestamp, 50, 260, 600, 40).getText().getTextStyle().setFontSize(14).setForegroundColor("#64748b");
+
     if (statsObj && statsObj.kpis) {
       const slideKpi = presentation.appendSlide(SlidesApp.PredefinedLayout.BLANK);
-      slideKpi.insertTextBox("Resumo Operacional", 50, 30, 620, 50)
-        .getText().getTextStyle().setFontSize(22).setBold(true).setForegroundColor("#1e293b");
-        
+      slideKpi.insertTextBox("Resumo Operacional", 50, 30, 620, 50).getText().getTextStyle().setFontSize(22).setBold(true).setForegroundColor("#1e293b");
+
       let textoKpi = "📊 NÚMEROS GERAIS DA OPERAÇÃO:\n\n";
       textoKpi += "• Veículos Pendentes de Ação: " + statsObj.kpis.pendentesTotal + "\n";
       textoKpi += "   (Etapa 1: " + statsObj.kpis.pendentesEtapa['1'] + " | Etapa 2: " + statsObj.kpis.pendentesEtapa['2'] + " | Etapa 3: " + statsObj.kpis.pendentesEtapa['3'] + ")\n\n";
-      
       textoKpi += "• Total de E-mails Enviados: " + statsObj.kpis.emails.total + "\n";
       textoKpi += "   (Hoje: " + statsObj.kpis.emails.hoje + " | Semana: " + statsObj.kpis.emails.semana + " | Mês Atual: " + statsObj.kpis.emails.mes + ")\n\n";
-      
       textoKpi += "• Total de WhatsApps Marcados: " + statsObj.kpis.whats.total + "\n";
       textoKpi += "   (Hoje: " + statsObj.kpis.whats.hoje + " | Semana: " + statsObj.kpis.whats.semana + " | Mês Atual: " + statsObj.kpis.whats.mes + ")\n\n";
-      
       textoKpi += "• Conclusões (Instalações Finalizadas): " + statsObj.kpis.conclusaoTotal + "\n";
       textoKpi += "   (Etapa 1: " + statsObj.kpis.conclusaoEtapa['1'] + " | Etapa 2: " + statsObj.kpis.conclusaoEtapa['2'] + " | Etapa 3: " + statsObj.kpis.conclusaoEtapa['3'] + ")\n";
-      
-      slideKpi.insertTextBox(textoKpi, 50, 100, 620, 350)
-        .getText().getTextStyle().setFontSize(14).setForegroundColor("#334155");
+
+      slideKpi.insertTextBox(textoKpi, 50, 100, 620, 350).getText().getTextStyle().setFontSize(14).setForegroundColor("#334155");
     }
 
     graficos.forEach(graf => {
       const slide = presentation.appendSlide(SlidesApp.PredefinedLayout.BLANK);
-      slide.insertTextBox(graf.titulo, 50, 30, 620, 50)
-        .getText().getTextStyle().setFontSize(22).setBold(true).setForegroundColor("#1e293b");
-
+      slide.insertTextBox(graf.titulo, 50, 30, 620, 50).getText().getTextStyle().setFontSize(22).setBold(true).setForegroundColor("#1e293b");
       const base64Data = graf.base64.split(',')[1];
       const blob = Utilities.newBlob(Utilities.base64Decode(base64Data), 'image/png', graf.titulo + ".png");
       slide.insertImage(blob, 50, 100, 600, 300);
     });
-    
+
     return { url: presentation.getUrl(), erro: null };
   } catch (e) { return { url: null, erro: e.message }; }
 }
@@ -266,7 +214,7 @@ function exportarDashboardParaSlidesWeb(graficos, statsObj) {
 function aplicarTemplate(dict, chave, nomeCliente, identificadorVeiculo, isPlural) {
   let txt = dict[chave] || "⚠️ Erro: Template não encontrado.";
   let textoFinal = txt.replace(/{{NOME}}/g, nomeCliente).replace(/{{VEICULO}}/g, identificadorVeiculo);
-  
+
   if (isPlural) {
     const mapaPlural = [
       [/do seu veículo/gi, "dos seus veículos"], [/o seu veículo/gi, "os seus veículos"],
@@ -302,8 +250,12 @@ function obterFeriadosDoAno(ano) {
   feriados.push(formatar(addDias(pascoa, -47)));
   feriados.push(formatar(addDias(pascoa, -2)));
   feriados.push(formatar(addDias(pascoa, 60)));
-  function formatar(d) { const dd = String(d.getDate()).padStart(2, '0');
-  const mm = String(d.getMonth() + 1).padStart(2, '0'); return `${dd}/${mm}/${ano}`; }
+  
+  function formatar(d) { 
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0'); 
+    return `${dd}/${mm}/${ano}`; 
+  }
   
   const fixos = [ `01/01/${ano}`, `21/04/${ano}`, `23/04/${ano}`, `01/05/${ano}`, `24/06/${ano}`, `07/09/${ano}`, `12/10/${ano}`, `02/11/${ano}`, `15/11/${ano}`, `20/11/${ano}`, `22/11/${ano}`, `25/12/${ano}` ];
   return [...feriados, ...fixos];
@@ -315,8 +267,8 @@ function calcularDiasUteis(dataInicial, dataFinal, arrayFeriadosPersonalizadosTi
   dataAtual.setHours(0, 0, 0, 0);
   let dFinal = new Date(dataFinal.getTime());
   dFinal.setHours(0, 0, 0, 0);
-  
   const cacheFeriados = {};
+
   while (dataAtual < dFinal) {
     dataAtual.setDate(dataAtual.getDate() + 1);
     let diaSemana = dataAtual.getDay();
@@ -346,7 +298,7 @@ function cadastrarLoteWeb(loteDeClientes) {
     const aba3 = ss.getSheets().find(s => s.getName().includes("3 -"));
     
     if (!aba1 || !aba2 || !aba3) return "❌ Erro: Abas de operação não encontradas.";
-    
+
     let feriadosTime = [];
     const abaFeriados = ss.getSheetByName("Feriados");
     if (abaFeriados) {
@@ -355,6 +307,7 @@ function cadastrarLoteWeb(loteDeClientes) {
 
     const chassisNoSistema = new Set();
     const placasNoSistema = new Set();
+
     ss.getSheets().filter(s => s.getName().includes("1 -") || s.getName().includes("2 -") || s.getName().includes("3 -") || s.getName().includes("4 -")).forEach(aba => {
       const dados = aba.getDataRange().getValues();
       for (let i = 1; i < dados.length; i++) {
@@ -362,15 +315,16 @@ function cadastrarLoteWeb(loteDeClientes) {
         if (dados[i][MAPA_COLUNAS.PLACA]) placasNoSistema.add(String(dados[i][MAPA_COLUNAS.PLACA]).trim().toUpperCase());
       }
     });
-    
+
     const token = autenticarHINOVA();
     if (!token) return "❌ Erro: Falha na autenticação com a Hinova.";
-    
+
     const requests = loteDeClientes.map(cli => {
       const vb = cli.chassi || cli.placa;
       const pb = cli.chassi ? "chassi" : "placa";
       return { url: `${SGA_CONFIG.URL_CONSULTA_BASE}${encodeURIComponent(vb)}/${pb}`, method: "get", headers: { "Authorization": "Bearer " + token }, muteHttpExceptions: true };
     });
+
     const responses = UrlFetchApp.fetchAll(requests);
     const qtdColunasParaInserir = Math.max(aba1.getLastColumn(), 20) - 1;
     const dtHoje = new Date();
@@ -378,7 +332,7 @@ function cadastrarLoteWeb(loteDeClientes) {
     
     let contInseridos = 0, contDuplicados = 0, contIgnoradosStatus = 0;
     const lotesPorAba = { 1: [], 2: [], 3: [] };
-    
+
     loteDeClientes.forEach((cliente, index) => {
       const chassiCli = String(cliente.chassi || "").trim().toUpperCase();
       const placaCli = String(cliente.placa || "").trim().toUpperCase();
@@ -413,7 +367,7 @@ function cadastrarLoteWeb(loteDeClientes) {
       if (chassiCli) chassisNoSistema.add(chassiCli);
       if (placaCli) placasNoSistema.add(placaCli);
     });
-    
+
     const inserirNaAba = (aba, matriz) => {
       if (matriz.length === 0) return;
       const nomes = aba.getRange("C1:C").getValues();
@@ -423,19 +377,25 @@ function cadastrarLoteWeb(loteDeClientes) {
       }
       aba.getRange(ultimaLinhaReal + 1, 2, matriz.length, qtdColunasParaInserir).setValues(matriz);
     };
-    
-    inserirNaAba(aba1, lotesPorAba[1]); inserirNaAba(aba2, lotesPorAba[2]); inserirNaAba(aba3, lotesPorAba[3]);
+
+    inserirNaAba(aba1, lotesPorAba[1]); 
+    inserirNaAba(aba2, lotesPorAba[2]); 
+    inserirNaAba(aba3, lotesPorAba[3]);
 
     let msg = `✅ Inteligência Processou!\n📥 ${contInseridos} roteados.`;
     if (contDuplicados > 0) msg += `\n⚠️ ${contDuplicados} duplicados ignorados.`;
     if (contIgnoradosStatus > 0) msg += `\n🚫 ${contIgnoradosStatus} barrados (Não Pendentes).`;
     return msg;
-  } catch (e) { return "❌ Erro Crítico no Motor: " + e.message; }
+
+  } catch (e) { 
+    return "❌ Erro Crítico no Motor: " + e.message;
+  }
 }
 
 function web_obterFilaGeral() {
   const ss = SpreadsheetApp.openById(PLANILHA_ID);
   const abas = ss.getSheets().filter(s => s.getName().includes("1 -") || s.getName().includes("2 -") || s.getName().includes("3 -"));
+
   const fila = [];
   const templatesDict = getTemplatesDict(ss);
 
@@ -464,8 +424,8 @@ function web_obterFilaGeral() {
       const notaEstado = (MAPA_COLUNAS.ESTADO < ultimaColuna && notas[i][MAPA_COLUNAS.ESTADO]) ? String(notas[i][MAPA_COLUNAS.ESTADO]) : "";
 
       let cidade = "", bairro = "";
-      let tecnicoDisp = "", tecnicoDist = "", tecnicoTempo = "";
-      
+      let tecnicoDisp = "", tecnicoDist = "", tecnicoTempo = "", tecnicoTipo = "Volante"; // TIPO ADICIONADO AQUI
+
       if (notaEstado.includes("Cidade:")) {
         const parts = notaEstado.split("\n");
         cidade = parts[0] ? parts[0].replace("📍 Cidade:", "").trim() : "";
@@ -473,11 +433,19 @@ function web_obterFilaGeral() {
       }
 
       if (notaEstado.includes("🛰️ LOGÍSTICA")) {
-        let logMatch = notaEstado.match(/Técnico Disponível: "(.*?)" - (.*?) \/ (.*?) de distância/);
-        if (logMatch) {
-          tecnicoDisp = logMatch[1];
-          tecnicoDist = logMatch[2];
-          tecnicoTempo = logMatch[3];
+        let logMatchNovo = notaEstado.match(/Atendimento: \[(.*?)\] "(.*?)" - (.*?) \/ (.*?) de distância/);
+        if (logMatchNovo) {
+          tecnicoTipo = logMatchNovo[1];
+          tecnicoDisp = logMatchNovo[2];
+          tecnicoDist = logMatchNovo[3];
+          tecnicoTempo = logMatchNovo[4];
+        } else {
+          let logMatch = notaEstado.match(/Técnico Disponível: "(.*?)" - (.*?) \/ (.*?) de distância/);
+          if (logMatch) {
+            tecnicoDisp = logMatch[1];
+            tecnicoDist = logMatch[2];
+            tecnicoTempo = logMatch[3];
+          }
         }
       }
 
@@ -487,6 +455,7 @@ function web_obterFilaGeral() {
         const idVeic = placa || chassi;
         const isPlural = String(idVeic).includes(",") || String(idVeic).includes(" e ");
         let chaveCorpo = numEtapa === 1 ? (l[MAPA_COLUNAS.FIPE_BAIXA] === true ? "BOAS_VINDAS_FIPE_BAIXA" : "BOAS_VINDAS_NORMAL") : numEtapa === 2 ? "LEMBRETE_5_DIAS" : "PRAZO_EXPIRADO";
+
         let txtCorpo = aplicarTemplate(templatesDict, chaveCorpo, nome || "Cliente", idVeic, isPlural);
         let disclaimer = aplicarTemplate(templatesDict, "WHATSAPP_DISCLAIMER", nome || "Cliente", idVeic, false);
         msgWhats = (disclaimer && !disclaimer.includes("⚠️")) ? disclaimer + "\n\n" + txtCorpo : txtCorpo;
@@ -500,7 +469,8 @@ function web_obterFilaGeral() {
         telefone: telefone,
         estado: l[MAPA_COLUNAS.ESTADO] ? String(l[MAPA_COLUNAS.ESTADO]).trim() : "",
         cidade: cidade, bairro: bairro,
-        tecnicoDisp: tecnicoDisp, tecnicoDist: tecnicoDist, tecnicoTempo: tecnicoTempo,
+        tecnicoDisp: tecnicoDisp, tecnicoDist: tecnicoDist, tecnicoTempo: tecnicoTempo, 
+        tecnicoTipo: tecnicoTipo, 
         dataPlanilha: (l[MAPA_COLUNAS.DATA] instanceof Date) ? Utilities.formatDate(l[MAPA_COLUNAS.DATA], Session.getScriptTimeZone(), "dd/MM/yyyy") : String(l[MAPA_COLUNAS.DATA] || "").split(" ")[0],
         dataEnvio: web_formatarDataSegura(l[MAPA_COLUNAS.DATA_EMAIL] || l[MAPA_COLUNAS.DATA_WHATS]),
         isEnviado: (l[MAPA_COLUNAS.CHECK_EMAIL] === true || l[MAPA_COLUNAS.CHECK_EMAIL] === "TRUE" || l[MAPA_COLUNAS.CHECK_EMAIL] === 1),
@@ -519,7 +489,7 @@ function web_obterFilaGeral() {
 }
 
 // ====================================================================================
-// AUTOMAÇÕES DE LOTE (COM LOGÍSTICA)
+// AUTOMAÇÕES DE LOTE (COM LOGÍSTICA ATUALIZADA)
 // ====================================================================================
 function processarItemLoteWeb(cli, comando) {
   const token = autenticarHINOVA();
@@ -534,74 +504,79 @@ function processarItemLoteWeb(cli, comando) {
   const linha = cli.linhaOriginal;
   const dt = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm");
   const codMoto = ["3", "126", "115", "100", "105", "127", "116", "32", "33", "34", "35", "95", "96", "97"];
-  
+
   try {
-    // LOGÍSTICA ATUALIZADA P/ 8 COLUNAS
     if (comando === "logistica") {
       const est = String(aba.getRange(linha, MAPA_COLUNAS.ESTADO + 1).getValue()).trim().toUpperCase();
-      if (est !== "" && est !== "RJ") {
-        const celulaEstado = aba.getRange(linha, MAPA_COLUNAS.ESTADO + 1);
-        const notaEndereço = celulaEstado.getNote();
+      const celulaEstado = aba.getRange(linha, MAPA_COLUNAS.ESTADO + 1);
+      const notaEndereço = celulaEstado.getNote();
         
-        if (notaEndereço && notaEndereço.indexOf("Cidade:") !== -1) {
-          const ssTec = SpreadsheetApp.openById(ID_PLANILHA_TECNICOS);
-          const listaTecnicos = ssTec.getSheets()[0].getDataRange().getValues().slice(1).filter(t => t[0]); // Filtra se tem nome
+      if (notaEndereço && notaEndereço.indexOf("Cidade:") !== -1) {
+        const ssTec = SpreadsheetApp.openById(ID_PLANILHA_TECNICOS);
+        const listaTecnicos = ssTec.getSheets()[0].getDataRange().getValues().slice(1).filter(t => t[0]); 
           
-          const cidadeMatch = notaEndereço.match(/Cidade:\s*(.*)/);
-          const bairroMatch = notaEndereço.match(/Bairro:\s*(.*)/);
-          const cidadeCli = cidadeMatch ? cidadeMatch[1].split('\n')[0].trim() : "";
-          const bairroCli = bairroMatch ? bairroMatch[1].split('\n')[0].trim() : "";
-          const enderecoDestino = `${bairroCli}, ${cidadeCli} - ${est}, Brasil`;
+        const cidadeMatch = notaEndereço.match(/Cidade:\s*(.*)/);
+        const bairroMatch = notaEndereço.match(/Bairro:\s*(.*)/);
+        const cidadeCli = cidadeMatch ? cidadeMatch[1].split('\n')[0].trim() : "";
+        const bairroCli = bairroMatch ? bairroMatch[1].split('\n')[0].trim() : "";
 
-          let melhorDistancia = Infinity;
-          let melhorTecnico = null;
-          let melhorTempoSeg = 0;
-          
-          listaTecnicos.forEach(tecnico => {
-            try {
-              const logradouro = tecnico[1] || "";
-              const numero = tecnico[2] || "";
-              const bairro = tecnico[3] || "";
-              const cidade = tecnico[4] || "";
-              const estado = tecnico[5] || "";
-              const cep = tecnico[6] || "";
-              const origemCompleta = `${logradouro}, ${numero} - ${bairro}, ${cidade} - ${estado}, ${cep}, Brasil`;
+        const enderecoDestino = `${bairroCli}, ${cidadeCli} - ${est}, Brasil`;
 
-              const direcoes = Maps.newDirectionFinder()
-                .setOrigin(origemCompleta)
-                .setDestination(enderecoDestino)
-                .setMode(Maps.DirectionFinder.Mode.DRIVING)
-                .getDirections();
+        let melhorDistancia = Infinity;
+        let melhorTecnico = null;
+        let melhorTempoSeg = 0;
+        let melhorTipo = "Volante"; 
 
-              if (direcoes.routes && direcoes.routes.length > 0) {
-                const rota = direcoes.routes[0].legs[0];
-                if (rota.distance.value < melhorDistancia) {
-                  melhorDistancia = rota.distance.value;
-                  melhorTecnico = tecnico[0];
-                  melhorTempoSeg = rota.duration.value;
-                }
+        listaTecnicos.forEach(tecnico => {
+          try {
+            const logradouro = tecnico[1] || "";
+            const numero = tecnico[2] || "";
+            const bairro = tecnico[3] || "";
+            const cidade = tecnico[4] || "";
+            const estado = tecnico[5] || "";
+            const cep = tecnico[6] || "";
+            const tipo = tecnico[8] ? String(tecnico[8]).trim() : "Volante"; 
+            
+            const origemCompleta = `${logradouro}, ${numero} - ${bairro}, ${cidade} - ${estado}, ${cep}, Brasil`;
+
+            const direcoes = Maps.newDirectionFinder()
+              .setOrigin(origemCompleta)
+              .setDestination(enderecoDestino)
+              .setMode(Maps.DirectionFinder.Mode.DRIVING)
+              .getDirections();
+
+            if (direcoes.routes && direcoes.routes.length > 0) {
+              const rota = direcoes.routes[0].legs[0];
+              if (rota.distance.value < melhorDistancia) {
+                melhorDistancia = rota.distance.value;
+                melhorTecnico = tecnico[0];
+                melhorTempoSeg = rota.duration.value;
+                melhorTipo = tipo; 
               }
-            } catch (e) {}
-          });
-          
-          if (melhorTecnico) {
-            const distKm = (melhorDistancia / 1000).toFixed(1);
-            const h = Math.floor(melhorTempoSeg / 3600);
-            const m = Math.floor((melhorTempoSeg % 3600) / 60);
-            const tempoFormatado = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-            const notaLimpa = notaEndereço.split("\n\n--- 🛰️ LOGÍSTICA ---")[0];
-            celulaEstado.setNote(notaLimpa + "\n\n--- 🛰️ LOGÍSTICA ---\n" + `Técnico Disponível: "${melhorTecnico}" - ${distKm} Km / ${tempoFormatado} de distância de carro`);
-            return { status: 'ok', msg: 'Rota calculada' };
-          }
+            }
+          } catch (e) {}
+        });
+
+        if (melhorTecnico) {
+          const distKm = (melhorDistancia / 1000).toFixed(1);
+          const h = Math.floor(melhorTempoSeg / 3600);
+          const m = Math.floor((melhorTempoSeg % 3600) / 60);
+          const tempoFormatado = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+
+          const notaLimpa = notaEndereço.split("\n\n--- 🛰️ LOGÍSTICA ---")[0];
+          celulaEstado.setNote(notaLimpa + "\n\n--- 🛰️ LOGÍSTICA ---\n" + `Atendimento: [${melhorTipo}] "${melhorTecnico}" - ${distKm} Km / ${tempoFormatado} de distância de carro`);
+
+          return { status: 'ok', msg: 'Rota calculada' };
         }
       }
-      return { status: 'ignorado', msg: 'Apenas p/ Fora RJ' };
+      return { status: 'ignorado', msg: 'Endereço inválido para roteirização' };
     }
 
     const resp = UrlFetchApp.fetch(`${SGA_CONFIG.URL_CONSULTA_BASE}${encodeURIComponent(vb)}/${pb}`, { "method": "get", "headers": { "Authorization": "Bearer " + token }, "muteHttpExceptions": true });
-    
+
     if (resp.getResponseCode() === 200) {
       const j = JSON.parse(resp.getContentText());
+
       if (j && j.length > 0) {
         const v = j[0];
         let alterado = false;
@@ -628,6 +603,7 @@ function processarItemLoteWeb(cli, comando) {
           const fTexto = v.valor_fipe || "";
           const f = parseFloat(String(fTexto).replace(/\./g, '').replace(',', '.')) || 0;
           if (fTexto) aba.getRange(linha, MAPA_COLUNAS.FIPE + 1).setValue(fTexto);
+
           if ((codMoto.includes(String(v.codigo_tipo_veiculo)) && f > 0 && f < 20000) || (!codMoto.includes(String(v.codigo_tipo_veiculo)) && f > 0 && f < 30000)) {
             aba.getRange(linha, MAPA_COLUNAS.FIPE_BAIXA + 1).setValue(true);
             alterado = true;
@@ -641,27 +617,51 @@ function processarItemLoteWeb(cli, comando) {
           if (!dadosLinha[MAPA_COLUNAS.EMAIL - 1] && v.email) { aba.getRange(linha, MAPA_COLUNAS.EMAIL + 1).setValue(String(v.email).toLowerCase().trim()); alterado = true; }
           if (!dadosLinha[MAPA_COLUNAS.TELEFONE - 1] && v.telefone_celular) { aba.getRange(linha, MAPA_COLUNAS.TELEFONE + 1).setValue(`(${v.ddd_celular || ""}) ${v.telefone_celular}`); alterado = true; }
           if (!dadosLinha[MAPA_COLUNAS.FIPE - 1] && v.valor_fipe) { aba.getRange(linha, MAPA_COLUNAS.FIPE + 1).setValue(v.valor_fipe); alterado = true; }
+        
         } else if (comando === "estados") {
-          if (v.codigo_associado) {
+          // =========================================================================
+          // LÓGICA DE FALLBACK ATUALIZADA (PLANO A e B)
+          // =========================================================================
+          
+          // PLANO A: Pegar diretamente do próprio payload do Veículo
+          let est = v.estado ? String(v.estado).trim().toUpperCase() : "";
+          let cid = v.cidade ? String(v.cidade).trim() : "";
+          let bai = v.bairro ? String(v.bairro).trim() : "";
+
+          // PLANO B: Se a Hinova retornar o veículo sem endereço, buscamos na base do Associado
+          if ((!est || est === "N/A" || !cid) && v.codigo_associado) {
             const rA = UrlFetchApp.fetch(`https://api.hinova.com.br/api/sga/v2/associado/buscar/${v.codigo_associado}/codigo`, { "method": "get", "headers": { "Authorization": "Bearer " + token }, "muteHttpExceptions": true });
+
             if (rA.getResponseCode() === 200) {
               const jA = JSON.parse(rA.getContentText());
               const aD = (Array.isArray(jA) && jA.length > 0) ? jA[0] : jA;
-              const est = aD.estado ? String(aD.estado).trim().toUpperCase() : "N/A";
-              aba.getRange(linha, MAPA_COLUNAS.ESTADO + 1).setValue(est).setNote(`📍 Cidade: ${aD.cidade || ""}\n🏘️ Bairro: ${aD.bairro || ""}`);
               
-              if (est !== "RJ" && est !== "N/A") {
-                aba.getRange(linha, MAPA_COLUNAS.TECNICO_INDISPONIVEL + 1).setValue(true);
-                alterado = true;
-              }
+              est = aD.estado ? String(aD.estado).trim().toUpperCase() : "N/A";
+              cid = aD.cidade ? String(aD.cidade).trim() : "";
+              bai = aD.bairro ? String(aD.bairro).trim() : "";
             }
+          }
+
+          if (!est) est = "N/A";
+
+          aba.getRange(linha, MAPA_COLUNAS.ESTADO + 1).setValue(est).setNote(`📍 Cidade: ${cid}\n🏘️ Bairro: ${bai}`);
+          
+          if (est !== "RJ" && est !== "N/A") {
+            aba.getRange(linha, MAPA_COLUNAS.TECNICO_INDISPONIVEL + 1).setValue(true);
+            alterado = true;
+          } else {
+             // Caso seja um endereço válido atualizado
+             alterado = true;
           }
         }
         return { status: alterado ? 'ok' : 'ignorado', msg: 'Processado' };
       }
     }
     return { status: 'ignorado', msg: 'Nenhum dado na consulta' };
-  } catch (e) { return { status: 'erro', msg: e.message }; }
+
+  } catch (e) { 
+    return { status: 'erro', msg: e.message };
+  }
 }
 
 // ====================================================================================
@@ -693,6 +693,7 @@ function obterPreviewDisparoAgrupadoWeb(grupos) {
     const htmlBodyFormatado = formatarComoEmail(txt, tituloHeader);
     let cabecalhoWhatsApp = templatesDict["WHATSAPP_DISCLAIMER"] || "";
     let msgWhats = "";
+
     if (cabecalhoWhatsApp && cabecalhoWhatsApp.indexOf("⚠️ Erro:") === -1) {
       msgWhats = cabecalhoWhatsApp + "\n\n" + txt;
     } else {
@@ -701,9 +702,15 @@ function obterPreviewDisparoAgrupadoWeb(grupos) {
 
     let telefoneBase = g.linhas[0].telefone || "";
     let numeroLimpo = telefoneBase.toString().replace(/\D/g, "");
+
     if (numeroLimpo.length >= 10 && !numeroLimpo.startsWith("55")) numeroLimpo = "55" + numeroLimpo;
-    
-    return { email: g.email, nome: g.nome, veiculosStr: g.veiculosStr, etapaNum: g.etapaNum, assunto: ass, emailHtml: htmlBodyFormatado, whatsText: msgWhats, telefoneLimpo: numeroLimpo };
+
+    return { 
+      email: g.email, nome: g.nome, veiculosStr: g.veiculosStr, 
+      etapaNum: g.etapaNum, assunto: ass, emailHtml: htmlBodyFormatado, 
+      whatsText: msgWhats, telefoneLimpo: numeroLimpo,
+      isErroEmail: g.isErroEmail, isEnviado: g.isEnviado, isInativo: g.isInativo 
+    };
   });
 }
 
@@ -738,12 +745,11 @@ function dispararEmailAgrupadoWeb(grupos, responsavel) {
     try {
       const htmlBodyFormatado = formatarComoEmail(txt, tituloHeader);
       MailApp.sendEmail({
-        to: g.email,
-        subject: ass,
+        to: g.email, subject: ass,
         body: txt + "\n\nAtenciosamente,\nSetor de Rastreamento\nZEN Seguros",
-        htmlBody: htmlBodyFormatado,
-        name: "Setor de Rastreamento - ZEN Seguros"
+        htmlBody: htmlBodyFormatado, name: "Setor de Rastreamento - ZEN Seguros"
       });
+
       g.linhas.forEach(cli => {
         const aba = ss.getSheetByName(cli.abaNome);
         if (aba) {
@@ -753,6 +759,7 @@ function dispararEmailAgrupadoWeb(grupos, responsavel) {
           registrarAuditoriaExata(cli.nome, cli.placa, cli.chassi, cli.email, cli.telefone, ac, dt, responsavel);
         }
       });
+
     } catch (e) {
       errosCriticos.push(`Destino [${g.email}]\nErro Final: ${e.message}`);
       g.linhas.forEach(cli => {
@@ -769,6 +776,7 @@ function dispararEmailAgrupadoWeb(grupos, responsavel) {
 function marcarWhatsAgrupadoWeb(grupos, responsavel) {
   const ss = SpreadsheetApp.openById(PLANILHA_ID);
   const dt = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm");
+
   grupos.forEach(g => {
     let ac = g.etapaNum === 1 ? "1_WHATS" : g.etapaNum === 2 ? "2_WHATS" : "3_WHATS";
     g.linhas.forEach(cli => {
@@ -816,6 +824,7 @@ function autenticarHINOVA() {
   const cache = CacheService.getScriptCache();
   const tokenCache = cache.get("HINOVA_TOKEN");
   if (tokenCache) return tokenCache;
+
   try {
     const options = {
       "method": "post",
@@ -823,6 +832,7 @@ function autenticarHINOVA() {
       "payload": JSON.stringify({ "usuario": SGA_CONFIG.USUARIO, "senha": SGA_CONFIG.SENHA }),
       "muteHttpExceptions": true
     };
+
     const resp = UrlFetchApp.fetch(SGA_CONFIG.URL_AUTH, options);
     if (resp.getResponseCode() !== 200) return null;
     
@@ -835,11 +845,14 @@ function autenticarHINOVA() {
 function varrerConcluidosGlobalWeb() {
   const token = autenticarHINOVA();
   if (!token) return "❌ Falha na autenticação com a Hinova.";
+
   const ss = SpreadsheetApp.openById(PLANILHA_ID);
   const dt = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm");
   let contConcluidos = 0;
+
   let logSheet = ss.getSheetByName("Log Concluídos") || ss.insertSheet("Log Concluídos");
   const todosClientes = [];
+
   ["1 -", "2 -", "3 -"].forEach(nomeFrag => {
     const aba = ss.getSheets().find(s => s.getName().includes(nomeFrag));
     if (!aba) return;
@@ -857,13 +870,17 @@ function varrerConcluidosGlobalWeb() {
       }
     }
   });
+
   if (todosClientes.length === 0) return "Nenhum cliente na fila para varrer.";
+
   const requests = todosClientes.map(cli => ({
     url: `${SGA_CONFIG.URL_CONSULTA_BASE}${encodeURIComponent(cli.identificador)}/${cli.tipoBusca}`, method: "get", headers: { "Authorization": "Bearer " + token }, muteHttpExceptions: true
   }));
+
   const responses = UrlFetchApp.fetchAll(requests);
   const linhasParaDeletar = {};
   const dadosParaLog = [];
+
   todosClientes.forEach((cli, index) => {
     try {
       if (responses[index].getResponseCode() === 200) {
@@ -877,10 +894,12 @@ function varrerConcluidosGlobalWeb() {
       }
     } catch (e) { }
   });
+
   if (dadosParaLog.length > 0) {
     const ultimaLinhaLog = logSheet.getLastRow() || 1;
     logSheet.getRange(ultimaLinhaLog + 1, 1, dadosParaLog.length, dadosParaLog[0].length).setValues(dadosParaLog);
   }
+  
   for (const abaNome in linhasParaDeletar) {
     const aba = ss.getSheetByName(abaNome);
     if (aba) {
@@ -896,7 +915,10 @@ function atualizarMarcacaoWeb(abaNome, linha, campo, valorBooleano) {
     const aba = SpreadsheetApp.openById(PLANILHA_ID).getSheetByName(abaNome);
     if (!aba) return "Aba não encontrada.";
     let col = campo === 'fipeBaixa' ? MAPA_COLUNAS.FIPE_BAIXA + 1 : campo === 'tecnicoIndisp' ? MAPA_COLUNAS.TECNICO_INDISPONIVEL + 1 : campo === 'respEmail' ? MAPA_COLUNAS.RESPONDEU_EMAIL + 1 : campo === 'respWhats' ? MAPA_COLUNAS.RESPONDEU_WHATS + 1 : 0;
-    if (col > 0) { aba.getRange(linha, col).setValue(valorBooleano); return "✅ Salvo na planilha!"; }
+    if (col > 0) { 
+      aba.getRange(linha, col).setValue(valorBooleano);
+      return "✅ Salvo na planilha!"; 
+    }
     return "Campo inválido.";
   } catch (e) { return "❌ Erro: " + e.message; }
 }
@@ -906,6 +928,7 @@ function marcarComoEnviadoWeb(clientesSelecionados, responsavel) {
   const ss = SpreadsheetApp.openById(PLANILHA_ID);
   const dt = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm");
   let cont = 0;
+
   clientesSelecionados.forEach(cli => {
     const aba = ss.getSheetByName(cli.abaNome);
     if (!aba) return;
@@ -924,12 +947,17 @@ function web_obterConfiguracoes() {
   if (!aba) return [];
   const dados = aba.getDataRange().getValues();
   const configs = [];
-  for (let i = 1; i < dados.length; i++) { if (dados[i][0]) configs.push({ linhaOriginal: i + 1, chave: String(dados[i][0]), texto: dados[i][1] ? String(dados[i][1]) : "" }); }
+  for (let i = 1; i < dados.length; i++) { 
+    if (dados[i][0]) configs.push({ linhaOriginal: i + 1, chave: String(dados[i][0]), texto: dados[i][1] ? String(dados[i][1]) : "" });
+  }
   return JSON.parse(JSON.stringify(configs));
 }
 
 function salvarConfiguracaoWeb(linha, novoTexto) {
-  try { SpreadsheetApp.openById(PLANILHA_ID).getSheetByName("⚙️ Configurações").getRange(linha, 2).setValue(novoTexto); return "✅ Template atualizado!"; } catch (e) { return "❌ Erro: " + e.message; }
+  try { 
+    SpreadsheetApp.openById(PLANILHA_ID).getSheetByName("⚙️ Configurações").getRange(linha, 2).setValue(novoTexto); 
+    return "✅ Template atualizado!";
+  } catch (e) { return "❌ Erro: " + e.message; }
 }
 
 // ====================================================================================
@@ -940,8 +968,11 @@ function sinalizarErroEmail(aba, numeroLinha, motivo, dataHora) {
   var abaErro = ss.getSheetByName("Erro") || ss.insertSheet("Erro");
   var dados = aba.getRange(numeroLinha, 1, 1, aba.getLastColumn()).getValues()[0];
   var emailAtual = dados[MAPA_COLUNAS.EMAIL] ? String(dados[MAPA_COLUNAS.EMAIL]).toLowerCase().trim() : "";
+  
   if (emailAtual !== "") {
-    var linhaParaErro = dados.slice(); linhaParaErro.push("FALHA: " + motivo); linhaParaErro.push(dataHora);
+    var linhaParaErro = dados.slice(); 
+    linhaParaErro.push("FALHA: " + motivo); 
+    linhaParaErro.push(dataHora);
     abaErro.appendRow(linhaParaErro);
   }
   aba.getRange(numeroLinha, MAPA_COLUNAS.EMAIL + 1).setFontColor("#FF0000").setFontWeight("bold").setNote("⚠️ Erro: " + motivo);
@@ -950,34 +981,88 @@ function sinalizarErroEmail(aba, numeroLinha, motivo, dataHora) {
 function registrarAuditoriaExata(nome, placa, chassi, email, telefone, chaveAcao, dataHora, responsavel) {
   var abaAuditoria = SpreadsheetApp.openById(PLANILHA_ID).getSheetByName("4 -Registro - NÃO ALTERAR");
   if (!abaAuditoria) return;
-  const MAPA_AUDITORIA = { "1_EMAIL": { check: "1- E-mail (boas vindas)", data: "1- Enviado e-mail em:", resp: "1-Responsável (boas vindas)" }, "1_WHATS": { check: "1-Whatsapp (boas vindas)", data: "1 -Enviado whats em:", resp: "1-Responsável (boas vindas)" }, "2_EMAIL": { check: "2- E-mail (5 dias)", data: "2- Enviado e-mail em:", resp: "2-Responsável (5 dias)" }, "2_WHATS": { check: "2-Whatsapp (5 dias)", data: "2 -Enviado whats em:", resp: "2-Responsável (5 dias)" }, "3_EMAIL": { check: "3- E-mail (prazo)", data: "3- Enviado e-mail em:", resp: "3-Responsável (prazo)" }, "3_WHATS": { check: "3-Whatsapp (prazo)", data: "3 -Enviado whats em:", resp: "3-Responsável (prazo)" } };
+
+  const MAPA_AUDITORIA = { 
+    "1_EMAIL": { check: "1- E-mail (boas vindas)", data: "1- Enviado e-mail em:", resp: "1-Responsável (boas vindas)" }, 
+    "1_WHATS": { check: "1-Whatsapp (boas vindas)", data: "1 -Enviado whats em:", resp: "1-Responsável (boas vindas)" }, 
+    "2_EMAIL": { check: "2- E-mail (5 dias)", data: "2- Enviado e-mail em:", resp: "2-Responsável (5 dias)" }, 
+    "2_WHATS": { check: "2-Whatsapp (5 dias)", data: "2 -Enviado whats em:", resp: "2-Responsável (5 dias)" }, 
+    "3_EMAIL": { check: "3- E-mail (prazo)", data: "3- Enviado e-mail em:", resp: "3-Responsável (prazo)" }, 
+    "3_WHATS": { check: "3-Whatsapp (prazo)", data: "3 -Enviado whats em:", resp: "3-Responsável (prazo)" } 
+  };
+
   if (!MAPA_AUDITORIA[chaveAcao]) return;
+
   var cabecalho = abaAuditoria.getRange(1, 1, 1, abaAuditoria.getLastColumn()).getValues()[0].map(x => x ? String(x).trim() : "");
-  var cChk = cabecalho.indexOf(MAPA_AUDITORIA[chaveAcao].check.trim()), cDat = cabecalho.indexOf(MAPA_AUDITORIA[chaveAcao].data.trim()), cRes = cabecalho.indexOf(MAPA_AUDITORIA[chaveAcao].resp.trim());
-  var cNom = cabecalho.indexOf("Nome"), cPla = cabecalho.indexOf("Placa"), cCha = cabecalho.indexOf("Chassi"), cEma = cabecalho.indexOf("E-mail") > -1 ? cabecalho.indexOf("E-mail") : cabecalho.indexOf("Email"), cTel = cabecalho.indexOf("Telefone");
-  var uLinha = abaAuditoria.getLastRow(), dados = uLinha > 1 ? abaAuditoria.getRange(2, 1, uLinha - 1, abaAuditoria.getLastColumn()).getValues() : [];
+  var cChk = cabecalho.indexOf(MAPA_AUDITORIA[chaveAcao].check.trim()), 
+      cDat = cabecalho.indexOf(MAPA_AUDITORIA[chaveAcao].data.trim()), 
+      cRes = cabecalho.indexOf(MAPA_AUDITORIA[chaveAcao].resp.trim());
+      
+  var cNom = cabecalho.indexOf("Nome"), 
+      cPla = cabecalho.indexOf("Placa"), 
+      cCha = cabecalho.indexOf("Chassi"), 
+      cEma = cabecalho.indexOf("E-mail") > -1 ? cabecalho.indexOf("E-mail") : cabecalho.indexOf("Email"), 
+      cTel = cabecalho.indexOf("Telefone");
+      
+  var uLinha = abaAuditoria.getLastRow(), 
+      dados = uLinha > 1 ? abaAuditoria.getRange(2, 1, uLinha - 1, abaAuditoria.getLastColumn()).getValues() : [];
   var lAlvo = -1;
-  for (var i = 0; i < dados.length; i++) { if ((placa && String(dados[i][cPla]).trim() === placa) || (chassi && String(dados[i][cCha]).trim() === chassi)) { lAlvo = i + 2; break; } }
-  if (lAlvo === -1) { lAlvo = uLinha + 1;
-  if (cNom > -1) abaAuditoria.getRange(lAlvo, cNom + 1).setValue(nome); if (cPla > -1) abaAuditoria.getRange(lAlvo, cPla + 1).setValue(placa);
-  if (cCha > -1) abaAuditoria.getRange(lAlvo, cCha + 1).setValue(chassi); if (cEma > -1) abaAuditoria.getRange(lAlvo, cEma + 1).setValue(email);
-  if (cTel > -1) abaAuditoria.getRange(lAlvo, cTel + 1).setValue(telefone); }
+
+  for (var i = 0; i < dados.length; i++) { 
+    if ((placa && String(dados[i][cPla]).trim() === placa) || (chassi && String(dados[i][cCha]).trim() === chassi)) { 
+      lAlvo = i + 2;
+      break; 
+    } 
+  }
+
+  if (lAlvo === -1) { 
+    lAlvo = uLinha + 1;
+    if (cNom > -1) abaAuditoria.getRange(lAlvo, cNom + 1).setValue(nome); 
+    if (cPla > -1) abaAuditoria.getRange(lAlvo, cPla + 1).setValue(placa);
+    if (cCha > -1) abaAuditoria.getRange(lAlvo, cCha + 1).setValue(chassi); 
+    if (cEma > -1) abaAuditoria.getRange(lAlvo, cEma + 1).setValue(email);
+    if (cTel > -1) abaAuditoria.getRange(lAlvo, cTel + 1).setValue(telefone); 
+  }
+
   if (cChk > -1) abaAuditoria.getRange(lAlvo, cChk + 1).setValue(true);
-  if (cDat > -1) abaAuditoria.getRange(lAlvo, cDat + 1).setValue(dataHora); if (cRes > -1 && responsavel) abaAuditoria.getRange(lAlvo, cRes + 1).setValue(responsavel);
+  if (cDat > -1) abaAuditoria.getRange(lAlvo, cDat + 1).setValue(dataHora); 
+  if (cRes > -1 && responsavel) abaAuditoria.getRange(lAlvo, cRes + 1).setValue(responsavel);
 }
 
 function conciliarErrosMailerDaemon() {
-  const ss = SpreadsheetApp.openById(PLANILHA_ID); const abaErro = ss.getSheetByName("Erro") || ss.insertSheet("Erro"); let threads;
-  try { threads = GmailApp.search('(from:mailer-daemon OR from:postmaster) subject:("Delivery" OR "Failure" OR "Falha" OR "Undeliverable" OR "Returned" OR "Undelivered") newer_than:2d', 0, 50); } catch (e) { return; }
+  const ss = SpreadsheetApp.openById(PLANILHA_ID); 
+  const abaErro = ss.getSheetByName("Erro") || ss.insertSheet("Erro"); 
+  let threads;
+
+  try { 
+    threads = GmailApp.search('(from:mailer-daemon OR from:postmaster) subject:("Delivery" OR "Failure" OR "Falha" OR "Undeliverable" OR "Returned" OR "Undelivered") newer_than:2d', 0, 50);
+  } catch (e) { return; }
   if (threads.length === 0) return;
   const errosDet = {};
-  threads.forEach(t => { t.getMessages().forEach(m => { const c = m.getPlainBody(); const match = c.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/g); if (match) { match.forEach(em => { let e = em.toLowerCase().trim(); if (!e.includes("postmaster") && !e.includes("mailer-daemon")) errosDet[e] = "Falha na entrega"; }); } }); });
+
+  threads.forEach(t => { 
+    t.getMessages().forEach(m => { 
+      const c = m.getPlainBody(); 
+      const match = c.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/g); 
+      if (match) { 
+        match.forEach(em => { 
+          let e = em.toLowerCase().trim(); 
+          if (!e.includes("postmaster") && !e.includes("mailer-daemon")) errosDet[e] = "Falha na entrega"; 
+        }); 
+      } 
+    }); 
+  });
+
   const abas = ss.getSheets();
   for (let a = 0; a < abas.length; a++) {
     if (abas[a].getName().includes("1 -") || abas[a].getName().includes("2 -") || abas[a].getName().includes("3 -")) {
       const d = abas[a].getDataRange().getValues();
-      for (let j = d.length - 1; j >= 1; j--) { const em = d[j][MAPA_COLUNAS.EMAIL] ? String(d[j][MAPA_COLUNAS.EMAIL]).toLowerCase().trim() : "";
-      if (em && errosDet[em]) { abas[a].getRange(j + 1, MAPA_COLUNAS.EMAIL + 1).setFontColor("#FF0000").setFontWeight("bold").setNote("⚠️ Erro: " + errosDet[em]); } }
+      for (let j = d.length - 1; j >= 1; j--) { 
+        const em = d[j][MAPA_COLUNAS.EMAIL] ? String(d[j][MAPA_COLUNAS.EMAIL]).toLowerCase().trim() : "";
+        if (em && errosDet[em]) { 
+          abas[a].getRange(j + 1, MAPA_COLUNAS.EMAIL + 1).setFontColor("#FF0000").setFontWeight("bold").setNote("⚠️ Erro: " + errosDet[em]);
+        } 
+      }
     }
   }
 }
@@ -987,77 +1072,169 @@ function auditarVisualAba4() {
   if (!a4) return;
   const aConc = ss.getSheetByName("Log Concluídos"), aSit = ss.getSheetByName("6 -Situação"), aErr = ss.getSheetByName("Erro");
   const sC = new Set(), sI = new Set(), sE = new Set();
-  if (aConc) { const d = aConc.getDataRange().getValues();
-  for (let i = 1; i < d.length; i++) { if (d[i][2]) sC.add(String(d[i][2]).trim().toUpperCase()); if (d[i][3]) sC.add(String(d[i][3]).trim().toUpperCase()); } }
-  if (aSit) { const d = aSit.getDataRange().getValues();
-  for (let i = 1; i < d.length; i++) { const c = String(d[i][6]).trim();
-  if (c && c !== "1" && c !== "14") { if (d[i][2]) sI.add(String(d[i][2]).trim().toUpperCase()); if (d[i][3]) sI.add(String(d[i][3]).trim().toUpperCase()); } } }
-  if (aErr) { const d = aErr.getDataRange().getValues();
-  for (let i = 1; i < d.length; i++) { const e = String(d[i][MAPA_COLUNAS.EMAIL]).trim().toLowerCase(); if (e) sE.add(e); } }
-  const d4 = a4.getDataRange().getValues(); if (d4.length < 2) return;
+  
+  if (aConc) { 
+    const d = aConc.getDataRange().getValues();
+    for (let i = 1; i < d.length; i++) { 
+      if (d[i][2]) sC.add(String(d[i][2]).trim().toUpperCase()); 
+      if (d[i][3]) sC.add(String(d[i][3]).trim().toUpperCase());
+    } 
+  }
+  if (aSit) { 
+    const d = aSit.getDataRange().getValues();
+    for (let i = 1; i < d.length; i++) { 
+      const c = String(d[i][6]).trim();
+      if (c && c !== "1" && c !== "14") { 
+        if (d[i][2]) sI.add(String(d[i][2]).trim().toUpperCase()); 
+        if (d[i][3]) sI.add(String(d[i][3]).trim().toUpperCase());
+      } 
+    } 
+  }
+  if (aErr) { 
+    const d = aErr.getDataRange().getValues();
+    for (let i = 1; i < d.length; i++) { 
+      const e = String(d[i][MAPA_COLUNAS.EMAIL]).trim().toLowerCase(); 
+      if (e) sE.add(e);
+    } 
+  }
+  
+  const d4 = a4.getDataRange().getValues(); 
+  if (d4.length < 2) return;
   const cab = d4[0].map(c => String(c).trim()), iN = cab.indexOf("Nome"), iP = cab.indexOf("Placa"), iC = cab.indexOf("Chassi"), iE = cab.findIndex(c => c === "E-mail" || c === "Email");
   if (iN === -1) return;
+  
   const cF = [], pF = [];
   for (let i = 1; i < d4.length; i++) {
-    const p = iP > -1 && d4[i][iP] ? String(d4[i][iP]).trim().toUpperCase() : "", c = iC > -1 && d4[i][iC] ? String(d4[i][iC]).trim().toUpperCase() : "", e = iE > -1 && d4[i][iE] ? String(d4[i][iE]).trim().toLowerCase() : "";
+    const p = iP > -1 && d4[i][iP] ? String(d4[i][iP]).trim().toUpperCase() : "";
+    const c = iC > -1 && d4[i][iC] ? String(d4[i][iC]).trim().toUpperCase() : "";
+    const e = iE > -1 && d4[i][iE] ? String(d4[i][iE]).trim().toLowerCase() : "";
+
     let cr = "#000000", ps = "normal";
-    if ((p && sC.has(p)) || (c && sC.has(c))) { cr = "#2E7D32"; ps = "bold"; } else if ((p && sI.has(p)) || (c && sI.has(c))) { cr = "#9C27B0"; ps = "bold"; } else if (e && sE.has(e)) { cr = "#FF0000"; ps = "bold"; }
+    if ((p && sC.has(p)) || (c && sC.has(c))) { 
+      cr = "#2E7D32"; ps = "bold"; 
+    } else if ((p && sI.has(p)) || (c && sI.has(c))) { 
+      cr = "#9C27B0"; ps = "bold";
+    } else if (e && sE.has(e)) { 
+      cr = "#FF0000"; ps = "bold"; 
+    }
     cF.push([cr]); pF.push([ps]);
   }
-  if (cF.length > 0) { const rN = a4.getRange(2, iN + 1, cF.length, 1); rN.setFontColors(cF); rN.setFontWeights(pF); }
+  if (cF.length > 0) { 
+    const rN = a4.getRange(2, iN + 1, cF.length, 1); 
+    rN.setFontColors(cF); 
+    rN.setFontWeights(pF);
+  }
 }
 
 function web_obterDadosLogs(nomeDaAba) {
-  const ss = SpreadsheetApp.openById(PLANILHA_ID); const aba = ss.getSheetByName(nomeDaAba);
+  const ss = SpreadsheetApp.openById(PLANILHA_ID); 
+  const aba = ss.getSheetByName(nomeDaAba);
   if (!aba) return { colunas: [], linhas: [] };
   const dados = aba.getDataRange().getValues();
   if (dados.length < 2) return { colunas: [], linhas: [] };
+
   if (nomeDaAba === "4 -Registro - NÃO ALTERAR") {
     const aConc = ss.getSheetByName("Log Concluídos"), aSit = ss.getSheetByName("6 -Situação"), aErr = ss.getSheetByName("Erro");
     const sC = new Set(), sI = new Set(), sE = new Set();
-    if (aConc) { const d = aConc.getDataRange().getValues();
-    for (let i = 1; i < d.length; i++) { if (d[i][2]) sC.add(String(d[i][2]).trim().toUpperCase()); if (d[i][3]) sC.add(String(d[i][3]).trim().toUpperCase()); } }
-    if (aSit) { const d = aSit.getDataRange().getValues();
-    for (let i = 1; i < d.length; i++) { const c = String(d[i][6]).trim();
-    if (c && c !== "1" && c !== "14") { if (d[i][2]) sI.add(String(d[i][2]).trim().toUpperCase()); if (d[i][3]) sI.add(String(d[i][3]).trim().toUpperCase()); } } }
-    if (aErr) { const d = aErr.getDataRange().getValues();
-    for (let i = 1; i < d.length; i++) { const e = String(d[i][MAPA_COLUNAS.EMAIL]).trim().toLowerCase(); if (e) sE.add(e); } }
+    
+    if (aConc) { 
+      const d = aConc.getDataRange().getValues();
+      for (let i = 1; i < d.length; i++) { 
+        if (d[i][2]) sC.add(String(d[i][2]).trim().toUpperCase()); 
+        if (d[i][3]) sC.add(String(d[i][3]).trim().toUpperCase());
+      } 
+    }
+    if (aSit) { 
+      const d = aSit.getDataRange().getValues();
+      for (let i = 1; i < d.length; i++) { 
+        const c = String(d[i][6]).trim();
+        if (c && c !== "1" && c !== "14") { 
+          if (d[i][2]) sI.add(String(d[i][2]).trim().toUpperCase()); 
+          if (d[i][3]) sI.add(String(d[i][3]).trim().toUpperCase());
+        } 
+      } 
+    }
+    if (aErr) { 
+      const d = aErr.getDataRange().getValues();
+      for (let i = 1; i < d.length; i++) { 
+        const e = String(d[i][MAPA_COLUNAS.EMAIL]).trim().toLowerCase(); 
+        if (e) sE.add(e);
+      } 
+    }
+    
     const cab = dados[0].map(c => String(c).trim()), iN = cab.indexOf("Nome"), iP = cab.indexOf("Placa"), iC = cab.indexOf("Chassi"), iE = cab.findIndex(c => c === "E-mail" || c === "Email");
     const colunas = ["Status Principal", "Cliente", "Identificação", "Envios Processados", "Responsável pelo Envio"], linhasMatriz = [];
     let inicio = dados.length > 1001 ? dados.length - 1000 : 1;
+
     for (let i = dados.length - 1; i >= inicio; i--) {
-      const p = iP > -1 && dados[i][iP] ? String(dados[i][iP]).trim().toUpperCase() : "", c = iC > -1 && dados[i][iC] ? String(dados[i][iC]).trim().toUpperCase() : "", e = iE > -1 && dados[i][iE] ? String(dados[i][iE]).trim().toLowerCase() : "", nome = iN > -1 ? dados[i][iN] : "", ident = (p || "---") + " / " + (c || "---");
+      const p = iP > -1 && dados[i][iP] ? String(dados[i][iP]).trim().toUpperCase() : "";
+      const c = iC > -1 && dados[i][iC] ? String(dados[i][iC]).trim().toUpperCase() : "";
+      const e = iE > -1 && dados[i][iE] ? String(dados[i][iE]).trim().toLowerCase() : "";
+      const nome = iN > -1 ? dados[i][iN] : "";
+      const ident = (p || "---") + " / " + (c || "---");
+
       let envios = [], resps = new Set(), highestStage = 0;
-      const mapEtapas = [ { emj: "🔰", chkE: "1- E-mail (boas vindas)", datE: "1- Enviado e-mail em:", chkW: "1-Whatsapp (boas vindas)", datW: "1 -Enviado whats em:", resp: "1-Responsável (boas vindas)" }, { emj: "⚠️", chkE: "2- E-mail (5 dias)", datE: "2- Enviado e-mail em:", chkW: "2-Whatsapp (5 dias)", datW: "2 -Enviado whats em:", resp: "2-Responsável (5 dias)" }, { emj: "⛔", chkE: "3- E-mail (prazo)", datE: "3- Enviado e-mail em:", chkW: "3-Whatsapp (prazo)", datW: "3 -Enviado whats em:", resp: "3-Responsável (prazo)" } ];
+      const mapEtapas = [ 
+        { emj: "🔰", chkE: "1- E-mail (boas vindas)", datE: "1- Enviado e-mail em:", chkW: "1-Whatsapp (boas vindas)", datW: "1 -Enviado whats em:", resp: "1-Responsável (boas vindas)" }, 
+        { emj: "⚠️", chkE: "2- E-mail (5 dias)", datE: "2- Enviado e-mail em:", chkW: "2-Whatsapp (5 dias)", datW: "2 -Enviado whats em:", resp: "2-Responsável (5 dias)" }, 
+        { emj: "⛔", chkE: "3- E-mail (prazo)", datE: "3- Enviado e-mail em:", chkW: "3-Whatsapp (prazo)", datW: "3 -Enviado whats em:", resp: "3-Responsável (prazo)" } 
+      ];
+
       mapEtapas.forEach((etp, index) => {
         let idxCE = cab.indexOf(etp.chkE), idxDE = cab.indexOf(etp.datE), idxR = cab.indexOf(etp.resp), idxCW = cab.indexOf(etp.chkW), idxDW = cab.indexOf(etp.datW);
-        let dE = idxDE > -1 && dados[i][idxDE] ? web_formatarDataSegura(dados[i][idxDE]).split(" ")[0] : "", dW = idxDW > -1 && dados[i][idxDW] ? web_formatarDataSegura(dados[i][idxDW]).split(" ")[0] : "", responsavel = idxR > -1 && dados[i][idxR] ? String(dados[i][idxR]).trim() : "";
+        let dE = idxDE > -1 && dados[i][idxDE] ? web_formatarDataSegura(dados[i][idxDE]).split(" ")[0] : "";
+        let dW = idxDW > -1 && dados[i][idxDW] ? web_formatarDataSegura(dados[i][idxDW]).split(" ")[0] : "";
+        let responsavel = idxR > -1 && dados[i][idxR] ? String(dados[i][idxR]).trim() : "";
         let hasEnvio = false;
-        if ((idxCE > -1 && dados[i][idxCE] === true) || dE) { envios.push(`<div class="mb-1.5 text-[12px] flex items-center gap-1.5"><span class="text-base">${etp.emj}</span> <span class="text-indigo-600 dark:text-indigo-400 font-bold bg-indigo-50 dark:bg-indigo-900/30 px-1.5 py-0.5 rounded border border-indigo-100 dark:border-indigo-800/50">E-mail</span> <span class="text-slate-500">${dE || '✔️'}</span></div>`); if (responsavel && responsavel !== "Sistema") resps.add(`<div class="mb-1.5 text-[12px] flex items-center gap-1.5"><span class="text-base">${etp.emj}</span> <span class="font-black text-slate-700 dark:text-slate-300">${responsavel}</span></div>`); hasEnvio = true; }
-        if ((idxCW > -1 && dados[i][idxCW] === true) || dW) { envios.push(`<div class="mb-1.5 text-[12px] flex items-center gap-1.5"><span class="text-base">${etp.emj}</span> <span class="text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded border border-emerald-100 dark:border-emerald-800/50">Whats</span> <span class="text-slate-500">${dW || '✔️'}</span></div>`);
-        if (responsavel && responsavel !== "Sistema") resps.add(`<div class="mb-1.5 text-[12px] flex items-center gap-1.5"><span class="text-base">${etp.emj}</span> <span class="font-black text-slate-700 dark:text-slate-300">${responsavel}</span></div>`); hasEnvio = true; }
+        
+        if ((idxCE > -1 && dados[i][idxCE] === true) || dE) { 
+          envios.push(`<div class="mb-1.5 text-[12px] flex items-center gap-1.5"><span class="text-base">${etp.emj}</span> <span class="text-indigo-600 dark:text-indigo-400 font-bold bg-indigo-50 dark:bg-indigo-900/30 px-1.5 py-0.5 rounded border border-indigo-100 dark:border-indigo-800/50">E-mail</span> <span class="text-slate-500">${dE || '✔️'}</span></div>`); 
+          if (responsavel && responsavel !== "Sistema") resps.add(`<div class="mb-1.5 text-[12px] flex items-center gap-1.5"><span class="text-base">${etp.emj}</span> <span class="font-black text-slate-700 dark:text-slate-300">${responsavel}</span></div>`);
+          hasEnvio = true; 
+        }
+        if ((idxCW > -1 && dados[i][idxCW] === true) || dW) { 
+          envios.push(`<div class="mb-1.5 text-[12px] flex items-center gap-1.5"><span class="text-base">${etp.emj}</span> <span class="text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded border border-emerald-100 dark:border-emerald-800/50">Whats</span> <span class="text-slate-500">${dW || '✔️'}</span></div>`);
+          if (responsavel && responsavel !== "Sistema") resps.add(`<div class="mb-1.5 text-[12px] flex items-center gap-1.5"><span class="text-base">${etp.emj}</span> <span class="font-black text-slate-700 dark:text-slate-300">${responsavel}</span></div>`); 
+          hasEnvio = true;
+        }
         if (hasEnvio) highestStage = index + 1;
       });
+
       let status = `<span class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2.5 py-1 rounded-md text-[10px] font-black border border-slate-200 dark:border-slate-700 tracking-wider shadow-sm">⏳ PENDENTE</span>`;
       if (highestStage === 1) status = `<span class="bg-indigo-100 dark:bg-indigo-900/40 text-indigo-800 dark:text-indigo-400 px-2.5 py-1 rounded-md text-[10px] font-black border border-indigo-300 dark:border-indigo-800/50 tracking-wider shadow-sm">🔰 BOAS VINDAS</span>`;
       else if (highestStage === 2) status = `<span class="bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-400 px-2.5 py-1 rounded-md text-[10px] font-black border border-amber-300 dark:border-amber-800/50 tracking-wider shadow-sm">⚠️ ALERTA 5D</span>`;
       else if (highestStage === 3) status = `<span class="bg-rose-100 dark:bg-rose-900/40 text-rose-800 dark:text-rose-400 px-2.5 py-1 rounded-md text-[10px] font-black border border-rose-300 dark:border-rose-800/50 tracking-wider shadow-sm">⛔ PRAZO EXP</span>`;
+
       if ((p && sC.has(p)) || (c && sC.has(c))) status = `<span class="bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-400 px-2.5 py-1 rounded-md text-[10px] font-black border border-emerald-300 dark:border-emerald-800/50 tracking-wider shadow-sm">✅ CONCLUÍDO</span>`;
       else if ((p && sI.has(p)) || (c && sI.has(c))) status = `<span class="bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-400 px-2.5 py-1 rounded-md text-[10px] font-black border border-purple-300 dark:border-purple-800/50 tracking-wider shadow-sm">🟣 INATIVO</span>`;
       else if (e && sE.has(e)) status = `<span class="bg-rose-100 dark:bg-rose-900/40 text-rose-800 dark:text-rose-400 px-2.5 py-1 rounded-md text-[10px] font-black border border-rose-300 dark:border-rose-800/50 tracking-wider shadow-sm">❌ ERRO</span>`;
-      linhasMatriz.push([ status, `<div class="font-black text-slate-800 dark:text-white text-sm mb-1">${nome}</div><div class="text-[11px] text-slate-500 font-medium">${e}</div>`, `<div class="font-mono text-slate-600 dark:text-slate-400 font-bold bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded w-max border border-slate-200 dark:border-slate-700">${ident}</div>`, envios.length > 0 ? envios.join("") : `<span class="text-slate-400 dark:text-slate-500 italic text-xs">Aguardando operação...</span>`, resps.size > 0 ? Array.from(resps).join("") : `<span class="text-slate-400 dark:text-slate-500">-</span>` ]);
+
+      linhasMatriz.push([ 
+        status, 
+        `<div class="font-black text-slate-800 dark:text-white text-sm mb-1">${nome}</div><div class="text-[11px] text-slate-500 font-medium">${e}</div>`, 
+        `<div class="font-mono text-slate-600 dark:text-slate-400 font-bold bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded w-max border border-slate-200 dark:border-slate-700">${ident}</div>`, 
+        envios.length > 0 ? envios.join("") : `<span class="text-slate-400 dark:text-slate-500 italic text-xs">Aguardando operação...</span>`, 
+        resps.size > 0 ? Array.from(resps).join("") : `<span class="text-slate-400 dark:text-slate-500">-</span>` 
+      ]);
     }
     return JSON.parse(JSON.stringify({ colunas, linhas: linhasMatriz, isHtml: true }));
   }
-  const cabecalho = dados[0].map(c => String(c)), idxRegistroUnico = cabecalho.indexOf("Registro único"); if (idxRegistroUnico > -1) cabecalho.splice(idxRegistroUnico, 1);
-  const linhasMatriz = []; let inicio = dados.length > 1001 ? dados.length - 1000 : 1;
-  for (let i = dados.length - 1; i >= inicio; i--) { let row = dados[i];
-  if (idxRegistroUnico > -1) { row = [...row]; row.splice(idxRegistroUnico, 1); } linhasMatriz.push(row.map(val => web_converterBooleano(val))); }
+
+  const cabecalho = dados[0].map(c => String(c)), idxRegistroUnico = cabecalho.indexOf("Registro único"); 
+  if (idxRegistroUnico > -1) cabecalho.splice(idxRegistroUnico, 1);
+  const linhasMatriz = []; 
+  let inicio = dados.length > 1001 ? dados.length - 1000 : 1;
+
+  for (let i = dados.length - 1; i >= inicio; i--) { 
+    let row = dados[i];
+    if (idxRegistroUnico > -1) { row = [...row]; row.splice(idxRegistroUnico, 1); } 
+    linhasMatriz.push(row.map(val => web_converterBooleano(val)));
+  }
   return JSON.parse(JSON.stringify({ colunas: cabecalho, linhas: linhasMatriz, isHtml: false }));
 }
 
 // ====================================================================================
-// GESTÃO DE TÉCNICOS (CRUD PLANILHA TÉCNICOS - AS 8 COLUNAS)
+// GESTÃO DE TÉCNICOS (CRUD PLANILHA TÉCNICOS LENDO ATÉ COLUNA I)
 // ====================================================================================
 function web_obterTecnicos() {
   try {
@@ -1065,7 +1242,7 @@ function web_obterTecnicos() {
     const aba = ss.getSheets()[0];
     const dados = aba.getDataRange().getValues();
     const tecnicos = [];
-    // Mapeamento EXATO: Nome(0), Endereço(1), Número(2), Bairro(3), Cidade(4), Estado(5), CEP(6), Telefone(7)
+
     for (let i = 1; i < dados.length; i++) {
       if (dados[i][0]) {
         tecnicos.push({
@@ -1077,19 +1254,21 @@ function web_obterTecnicos() {
           cidade: String(dados[i][4] || "").trim(),
           estado: String(dados[i][5] || "").trim(),
           cep: String(dados[i][6] || "").trim(),
-          telefone: String(dados[i][7] || "").trim()
+          telefone: String(dados[i][7] || "").trim(),
+          tipo: String(dados[i][8] || "Volante").trim() // Lê a coluna I (Índice 8)
         });
       }
     }
     return tecnicos;
-  } catch (e) { return { erro: "Erro ao ler a planilha de técnicos. Verifique o ID e permissões: " + e.message }; }
+  } catch (e) { return { erro: "Erro ao ler a planilha de técnicos: " + e.message }; }
 }
 
 function web_adicionarTecnico(dadosObj) {
   try {
     const ss = SpreadsheetApp.openById(ID_PLANILHA_TECNICOS);
     const aba = ss.getSheets()[0];
-    aba.appendRow([ dadosObj.nome, dadosObj.endereco, dadosObj.numero, dadosObj.bairro, dadosObj.cidade, dadosObj.estado, dadosObj.cep, dadosObj.telefone ]);
+    // Grava as 9 colunas
+    aba.appendRow([ dadosObj.nome, dadosObj.endereco, dadosObj.numero, dadosObj.bairro, dadosObj.cidade, dadosObj.estado, dadosObj.cep, dadosObj.telefone, dadosObj.tipo || 'Volante' ]);
     return "✅ Técnico cadastrado com sucesso!";
   } catch (e) { return "❌ Erro ao salvar técnico: " + e.message; }
 }
@@ -1098,7 +1277,8 @@ function web_atualizarTecnico(linha, dadosObj) {
   try {
     const ss = SpreadsheetApp.openById(ID_PLANILHA_TECNICOS);
     const aba = ss.getSheets()[0];
-    aba.getRange(linha, 1, 1, 8).setValues([[ dadosObj.nome, dadosObj.endereco, dadosObj.numero, dadosObj.bairro, dadosObj.cidade, dadosObj.estado, dadosObj.cep, dadosObj.telefone ]]);
+    // Atualiza as 9 colunas
+    aba.getRange(linha, 1, 1, 9).setValues([[ dadosObj.nome, dadosObj.endereco, dadosObj.numero, dadosObj.bairro, dadosObj.cidade, dadosObj.estado, dadosObj.cep, dadosObj.telefone, dadosObj.tipo || 'Volante' ]]);
     return "✅ Dados do técnico atualizados com sucesso!";
   } catch (e) { return "❌ Erro ao atualizar técnico: " + e.message; }
 }
@@ -1111,6 +1291,7 @@ function web_removerTecnico(linha) {
     return "✅ Técnico removido com sucesso!";
   } catch (e) { return "❌ Erro ao remover técnico: " + e.message; }
 }
+
 // ====================================================================================
 // HEALTH CHECK (TESTE DE APIS)
 // ====================================================================================
@@ -1132,12 +1313,9 @@ function web_testarAPIs() {
       "muteHttpExceptions": true
     };
     
-    // Dispara a requisição contra a Hinova
     const resp = UrlFetchApp.fetch(SGA_CONFIG.URL_AUTH, options);
-    
-    // Calcula o tempo de resposta (Ping)
-    status.tempo = new Date().getTime() - inicio; 
-    
+    status.tempo = new Date().getTime() - inicio;
+
     if (resp.getResponseCode() === 200) {
       const json = JSON.parse(resp.getContentText());
       if (json.token_usuario) {
