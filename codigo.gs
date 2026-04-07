@@ -424,7 +424,7 @@ function web_obterFilaGeral() {
       const notaEstado = (MAPA_COLUNAS.ESTADO < ultimaColuna && notas[i][MAPA_COLUNAS.ESTADO]) ? String(notas[i][MAPA_COLUNAS.ESTADO]) : "";
 
       let cidade = "", bairro = "";
-      let tecnicoDisp = "", tecnicoDist = "", tecnicoTempo = "", tecnicoTipo = "Volante"; // TIPO ADICIONADO AQUI
+      let tecnicoDisp = "", tecnicoDist = "", tecnicoTempo = "", tecnicoTipo = "Volante"; 
 
       if (notaEstado.includes("Cidade:")) {
         const parts = notaEstado.split("\n");
@@ -619,16 +619,10 @@ function processarItemLoteWeb(cli, comando) {
           if (!dadosLinha[MAPA_COLUNAS.FIPE - 1] && v.valor_fipe) { aba.getRange(linha, MAPA_COLUNAS.FIPE + 1).setValue(v.valor_fipe); alterado = true; }
         
         } else if (comando === "estados") {
-          // =========================================================================
-          // LÓGICA DE FALLBACK ATUALIZADA (PLANO A e B)
-          // =========================================================================
-          
-          // PLANO A: Pegar diretamente do próprio payload do Veículo
           let est = v.estado ? String(v.estado).trim().toUpperCase() : "";
           let cid = v.cidade ? String(v.cidade).trim() : "";
           let bai = v.bairro ? String(v.bairro).trim() : "";
 
-          // PLANO B: Se a Hinova retornar o veículo sem endereço, buscamos na base do Associado
           if ((!est || est === "N/A" || !cid) && v.codigo_associado) {
             const rA = UrlFetchApp.fetch(`https://api.hinova.com.br/api/sga/v2/associado/buscar/${v.codigo_associado}/codigo`, { "method": "get", "headers": { "Authorization": "Bearer " + token }, "muteHttpExceptions": true });
 
@@ -650,7 +644,6 @@ function processarItemLoteWeb(cli, comando) {
             aba.getRange(linha, MAPA_COLUNAS.TECNICO_INDISPONIVEL + 1).setValue(true);
             alterado = true;
           } else {
-             // Caso seja um endereço válido atualizado
              alterado = true;
           }
         }
@@ -661,6 +654,28 @@ function processarItemLoteWeb(cli, comando) {
 
   } catch (e) { 
     return { status: 'erro', msg: e.message };
+  }
+}
+
+// ====================================================================================
+// EDIÇÃO MANUAL DO CLIENTE (VIA FILA)
+// ====================================================================================
+function web_atualizarDadosCliente(abaNome, linha, dados) {
+  try {
+    const ss = SpreadsheetApp.openById(PLANILHA_ID);
+    const aba = ss.getSheetByName(abaNome);
+    if (!aba) return "❌ Erro: Aba não encontrada no banco.";
+
+    if (dados.nome) aba.getRange(linha, MAPA_COLUNAS.NOME + 1).setValue(String(dados.nome).toUpperCase());
+    if (dados.placa) aba.getRange(linha, MAPA_COLUNAS.PLACA + 1).setValue(String(dados.placa).toUpperCase());
+    if (dados.chassi) aba.getRange(linha, MAPA_COLUNAS.CHASSI + 1).setValue(String(dados.chassi).toUpperCase());
+    if (dados.email) aba.getRange(linha, MAPA_COLUNAS.EMAIL + 1).setValue(String(dados.email).toLowerCase());
+    if (dados.telefone) aba.getRange(linha, MAPA_COLUNAS.TELEFONE + 1).setValue(String(dados.telefone));
+    if (dados.fipe) aba.getRange(linha, MAPA_COLUNAS.FIPE + 1).setValue(String(dados.fipe));
+
+    return "✅ Dados cadastrais atualizados com sucesso!";
+  } catch (e) {
+    return "❌ Erro ao atualizar: " + e.message;
   }
 }
 
