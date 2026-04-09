@@ -620,4 +620,24 @@
       if(!dotHinova || !dotViaCep) return;
 
       dotHinova.className = "w-3 h-3 rounded-full bg-slate-400 animate-pulse shadow-sm cursor-wait";
-      hoverHinova.innerHTML = "<div class='flex items-center gap-2 mb-1'><span class='text-slate-400'>📡</span> <b>Hinova (SGA)</b></div><span class='text-slate-400'>Aguardando resposta
+      hoverHinova.innerHTML = "<div class='flex items-center gap-2 mb-1'><span class='text-slate-400'>📡</span> <b>Hinova (SGA)</b></div><span class='text-slate-400'>Aguardando resposta...</span>";
+      
+      dotViaCep.className = "w-3 h-3 rounded-full bg-slate-400 animate-pulse shadow-sm cursor-wait";
+      hoverViaCep.innerHTML = "<div class='flex items-center gap-2 mb-1'><span class='text-slate-400'>📡</span> <b>ViaCEP</b></div><span class='text-slate-400'>Aguardando resposta...</span>";
+
+      const startViaCep = performance.now();
+      fetch('https://viacep.com.br/ws/01001000/json/', { method: 'GET', cache: 'no-cache' })
+        .then(res => { 
+           const tempo = Math.round(performance.now() - startViaCep);
+           if (res.ok) { dotViaCep.className = "w-3 h-3 rounded-full bg-emerald-500 shadow-md shadow-emerald-500/40"; hoverViaCep.innerHTML = `<div class='flex items-center gap-2 mb-1'><span class='text-emerald-400'>🟢</span> <b>ViaCEP Online</b></div><span class='text-slate-300'>Comunicação estável.</span><div class='mt-2 text-[10px] text-emerald-400/70 font-mono'>Ping: ${tempo}ms</div>`; } 
+           else throw new Error('Status ' + res.status); 
+        })
+        .catch(err => { dotViaCep.className = "w-3 h-3 rounded-full bg-rose-500 shadow-md shadow-rose-500/40 animate-bounce"; hoverViaCep.innerHTML = `<div class='flex items-center gap-2 mb-1'><span class='text-rose-500'>🔴</span> <b>ViaCEP Offline</b></div><div class='mt-2 pt-2 border-t border-slate-700 text-rose-300 font-mono text-[10px]'>LOG: ${err.message}</div>`; });
+
+      google.script.run.withSuccessHandler(res => {
+          if (res && res.hinova) { dotHinova.className = "w-3 h-3 rounded-full bg-emerald-500 shadow-md shadow-emerald-500/40"; hoverHinova.innerHTML = `<div class='flex items-center gap-2 mb-1'><span class='text-emerald-400'>🟢</span> <b>Hinova (SGA)</b></div><span class='text-slate-300'>Autenticado com sucesso.</span><div class='mt-2 text-[10px] text-emerald-400/70 font-mono'>Ping: ${res.tempo}ms</div>`; } else { dotHinova.className = "w-3 h-3 rounded-full bg-rose-500 shadow-md shadow-rose-500/40 animate-bounce"; hoverHinova.innerHTML = `<div class='flex items-center gap-2 mb-1'><span class='text-rose-500'>🔴</span> <b>Hinova Falhou</b></div><div class='mt-2 pt-2 border-t border-slate-700 text-rose-300 font-mono text-[10px]'>LOG: ${res.erro || 'Erro não mapeado.'}</div>`; }
+      }).withFailureHandler(err => {
+          dotHinova.className = "w-3 h-3 rounded-full bg-rose-500 shadow-md shadow-rose-500/40 animate-bounce"; hoverHinova.innerHTML = `<div class='flex items-center gap-2 mb-1'><span class='text-rose-500'>🔴</span> <b>Falha Google</b></div><div class='mt-2 pt-2 border-t border-slate-700 text-rose-300 font-mono text-[10px]'>LOG: ${err.message}</div>`;
+      }).web_testarAPIs();
+    }
+</script>
