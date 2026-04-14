@@ -1,6 +1,7 @@
 // ====================================================================================
 // AUDITORIA E LOGS (COM CENTRAL UNIFICADA E UX COMPACTA)
 // ====================================================================================
+
 function sinalizarErroEmail(aba, numeroLinha, motivo, dataHora) {
   var ss = SpreadsheetApp.openById(PLANILHA_ID);
   var abaErro = ss.getSheetByName("Erro") || ss.insertSheet("Erro");
@@ -106,68 +107,6 @@ function conciliarErrosMailerDaemon() {
   }
 }
 
-function auditarVisualAba4() {
-  const ss = SpreadsheetApp.openById(PLANILHA_ID), a4 = ss.getSheetByName("4 -Registro - NÃO ALTERAR");
-  if (!a4) return;
-  const aConc = ss.getSheetByName("Log Concluídos"), aSit = ss.getSheetByName("6 -Situação"), aErr = ss.getSheetByName("Erro");
-  const sC = new Set(), sI = new Set(), sE = new Set();
-  
-  if (aConc) { 
-    const d = aConc.getDataRange().getValues();
-    for (let i = 1; i < d.length; i++) { 
-      if (d[i][2]) sC.add(String(d[i][2]).trim().toUpperCase());
-      if (d[i][3]) sC.add(String(d[i][3]).trim().toUpperCase());
-    } 
-  }
-  if (aSit) { 
-    const d = aSit.getDataRange().getValues();
-    for (let i = 1; i < d.length; i++) { 
-      const c = String(d[i][6]).trim();
-      if (c && c !== "1" && c !== "14") { 
-        if (d[i][2]) sI.add(String(d[i][2]).trim().toUpperCase());
-        if (d[i][3]) sI.add(String(d[i][3]).trim().toUpperCase());
-      } 
-    } 
-  }
-  if (aErr) { 
-    const d = aErr.getDataRange().getValues();
-    for (let i = 1; i < d.length; i++) { 
-      const e = String(d[i][MAPA_COLUNAS.EMAIL]).trim().toLowerCase();
-      if (e) sE.add(e);
-    } 
-  }
-  
-  const d4 = a4.getDataRange().getValues(); 
-  if (d4.length < 2) return;
-  const cab = d4[0].map(c => String(c).trim()), iN = cab.indexOf("Nome"), iP = cab.indexOf("Placa"), iC = cab.indexOf("Chassi"), iE = cab.findIndex(c => c === "E-mail" || c === "Email");
-  if (iN === -1) return;
-  
-  const cF = [], pF = [];
-  for (let i = 1; i < d4.length; i++) {
-    const p = iP > -1 && d4[i][iP] ? String(d4[i][iP]).trim().toUpperCase() : "";
-    const c = iC > -1 && d4[i][iC] ? String(d4[i][iC]).trim().toUpperCase() : "";
-    const e = iE > -1 && d4[i][iE] ? String(d4[i][iE]).trim().toLowerCase() : "";
-
-    let cr = "#000000", ps = "normal";
-    if ((p && sC.has(p)) || (c && sC.has(c))) { 
-      cr = "#2E7D32";
-      ps = "bold"; 
-    } else if ((p && sI.has(p)) || (c && sI.has(c))) { 
-      cr = "#9C27B0";
-      ps = "bold";
-    } else if (e && sE.has(e)) { 
-      cr = "#FF0000";
-      ps = "bold"; 
-    }
-    cF.push([cr]); pF.push([ps]);
-  }
-  if (cF.length > 0) { 
-    const rN = a4.getRange(2, iN + 1, cF.length, 1);
-    rN.setFontColors(cF); 
-    rN.setFontWeights(pF);
-  }
-}
-
 // ------------------------------------------------------------------------------------
 // MOTOR UNIFICADO DA CENTRAL DE LOGS (UX COMPACTA)
 // ------------------------------------------------------------------------------------
@@ -243,7 +182,6 @@ function web_obterDadosLogsUnificado() {
     const e = iE > -1 && dados[i][iE] ? String(dados[i][iE]).trim().toLowerCase() : "";
     const nome = iN > -1 ? dados[i][iN] : "";
     
-    // Regra de prioridade: Placa primeiro. Se não tiver, usa o Chassi.
     const ident = p ? p : (c ? c : "---");
     
     let envios = [], resps = new Set(), highestStage = 0;
@@ -275,9 +213,6 @@ function web_obterDadosLogsUnificado() {
     let erroMsg = isErro ? mapE.get(e) : "";
     let txtSGA = codSGA ? (MAPA_SITUACAO_SGA[codSGA] || "Inativo") : "";
 
-    // -------------------------------------------------------------
-    // Geração do Ícone de Status Central com texto reduzido (text-lg)
-    // -------------------------------------------------------------
     let htmlStatus = `<div class="flex items-center gap-1.5 w-max">`;
     let temStatus = false;
     

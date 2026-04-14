@@ -178,7 +178,6 @@ function web_atualizarDadosCliente(abaNome, linha, dados) {
 
 function executarFerramentaWebGlobal(comando) {
   try {
-    if (comando === "auditar_aba4") { auditarVisualAba4(); return "✅ Auditoria Aba 4 concluída!"; }
     if (comando === "sincronizar_erros") { conciliarErrosMailerDaemon(); return "✅ Caixa do Gmail mapeada!"; }
     if (comando === "varrer_concluidos") { return varrerConcluidosGlobalWeb(); }
     return "⚠️ Comando não reconhecido.";
